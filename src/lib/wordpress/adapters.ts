@@ -205,8 +205,9 @@ export async function getGlobalSiteSettings(): Promise<GlobalSiteSettings> {
         ? { text: settings.announcementText, href: normalizeHref(settings.announcementLink) }
         : null,
     cta: {
-      label: settings.ctaLabel || "Get Protected",
-      href: normalizeHref(settings.ctaUrl || "/fire-safety-kit"),
+      // The header button recruits dealers; it overrides the CTA set in WordPress settings.
+      label: "Become a Dealer",
+      href: "/become-a-dealer",
     },
     contact: {
       phone: settings.phonePrimary,

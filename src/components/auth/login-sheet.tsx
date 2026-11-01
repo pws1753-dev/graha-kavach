@@ -14,7 +14,8 @@ import { LoginTabs } from "./login-tabs";
 const DISMISSED_KEY = "gk_login_prompt_dismissed";
 const PROMPT_DELAY_MS = 3000;
 const SNOOZE_MS = 24 * 60 * 60 * 1000;
-const NO_PROMPT_PATHS = ["/account", "/checkout", "/order-confirmation"];
+// /become-a-dealer is an ad landing page: a popup over its form would cost enquiries.
+const NO_PROMPT_PATHS = ["/account", "/checkout", "/order-confirmation", "/become-a-dealer"];
 
 function wasRecentlyDismissed(): boolean {
   try {
