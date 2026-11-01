@@ -1,22 +1,30 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { trackMetaEvent } from "@/lib/analytics/meta-pixel";
 
 type Props = {
   href: string;
   /** What the visitor tapped, for the analytics event. */
   channel: "whatsapp" | "phone";
+  variant?: "primary" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
   className?: string;
   children: React.ReactNode;
 };
 
-/** A WhatsApp or call link that reports a Contact event to Meta (browser + server) before it opens. */
-export function DealerContactLink({ href, channel, className, children }: Props) {
+/**
+ * A WhatsApp or call link in the site's standard button style. It reports a
+ * Contact event to Meta (browser + server) and GTM before the link opens.
+ */
+export function DealerContactLink({ href, channel, variant = "outline", size = "lg", className, children }: Props) {
   const external = href.startsWith("http");
 
   return (
-    <a
+    <Button
       href={href}
+      variant={variant}
+      size={size}
       className={className}
       {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       onClick={() => {
@@ -26,6 +34,6 @@ export function DealerContactLink({ href, channel, className, children }: Props)
       }}
     >
       {children}
-    </a>
+    </Button>
   );
 }

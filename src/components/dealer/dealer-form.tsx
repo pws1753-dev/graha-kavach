@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { fbq } from "@/lib/analytics/meta-pixel";
 import { DEALER_WHATSAPP_URL } from "@/lib/dealer/contact";
 
@@ -92,15 +93,16 @@ export function DealerForm() {
         <p className="mt-2 text-sm text-foreground-muted">
           Thank you. Our team will call you shortly with dealer pricing and terms.
         </p>
-        <a
+        <Button
           href={DEALER_WHATSAPP_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-5 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-[var(--radius)] bg-[#25D366] px-6 text-base font-semibold text-white transition-opacity hover:opacity-90"
+          size="lg"
+          className="mt-5"
         >
           <MessageCircle className="size-5" aria-hidden />
           Chat with us on WhatsApp
-        </a>
+        </Button>
       </div>
     );
   }
@@ -179,14 +181,10 @@ export function DealerForm() {
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={status === "sending"}
-        className="gk-button-gradient inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--radius)] px-6 text-base font-bold text-primary-foreground shadow-sm shadow-primary/20 transition-transform hover:-translate-y-0.5 disabled:opacity-70 sm:col-span-2"
-      >
+      <Button type="submit" size="lg" fullWidth disabled={status === "sending"} className="sm:col-span-2">
         {status === "sending" ? <Loader2 className="size-5 animate-spin" aria-hidden /> : null}
         {status === "sending" ? "Sending…" : "Get dealer pricing & terms"}
-      </button>
+      </Button>
       <p className="text-center text-xs text-foreground-muted sm:col-span-2">
         Our team will call you back. Your details are used only to contact you about the dealership.
       </p>

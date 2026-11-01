@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import {
   ArrowRight,
   Award,
@@ -9,20 +8,19 @@ import {
   ChevronDown,
   Factory,
   FlaskConical,
-  Handshake,
   Home,
+  Mail,
   MapPin,
   Megaphone,
   MessageCircle,
   Phone,
   ReceiptText,
-  ShieldCheck,
   Store,
-  Truck,
   Users,
 } from "lucide-react";
 import { DealerForm } from "@/components/dealer/dealer-form";
 import { DealerContactLink } from "@/components/dealer/dealer-contact-link";
+import { Button } from "@/components/ui/button";
 import { DEALER_EMAIL, DEALER_PHONE_DISPLAY, DEALER_PHONE_TEL, DEALER_WHATSAPP_URL } from "@/lib/dealer/contact";
 
 const PAGE_URL = "https://grahakavach.in/become-a-dealer";
@@ -41,6 +39,10 @@ const IMG = {
   iso9001: `${WP}/iso-9001-2015.png`,
   ce: `${WP}/ce-mark.png`,
 };
+
+/** Page width: 90% of the screen, centred, with no extra side padding. */
+const WRAP = "mx-auto w-[90%] max-w-[1680px]";
+const SECTION = "py-14 lg:py-20";
 
 export const metadata: Metadata = {
   title: "Become a Fire Safety Kit Dealer | Graha Kavach Dealership",
@@ -66,6 +68,12 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+const heroPoints = [
+  "Factory-direct supply from Udaipur. No middlemen.",
+  "ISO 9001:2015 certified, CE marked, tested in our own lab.",
+  "One 6-piece box: extinguisher, fire ball and fire blanket.",
+];
+
 const stats = [
   { value: "2010", label: "Making fire safety gear since" },
   { value: "2", label: "Own RIICO units in Udaipur" },
@@ -78,21 +86,21 @@ const threeJobs = [
     step: "01",
     role: "You grab it",
     name: "2 kg ABC dry powder fire extinguisher",
-    text: "The first-response tool for a small fire you can reach. Mounted on its wall bracket by the main door.",
+    text: "The first-response tool for a small fire you can reach. Mounted on its wall bracket by the main door, it is the first thing a family reaches for.",
     image: IMG.extinguisher,
   },
   {
     step: "02",
     role: "It acts on its own",
     name: "Automatic fire extinguisher ball",
-    text: "Sits on its stand near the electrical panel and acts when flames reach it, even when nobody is home.",
+    text: "Sits on its stand near the electrical panel and acts when flames reach it, even when nobody is home. The protection that works while the house is empty.",
     image: IMG.fireBall,
   },
   {
     step: "03",
     role: "You smother it",
     name: "Fire blanket, 1 m x 1 m",
-    text: "Hangs by the stove, ready for a pan or small kitchen fire, in a quick-release pull-tab pouch.",
+    text: "Hangs by the stove, ready for a pan or small kitchen fire. Pull the tabs, cover the fire and cut off the oxygen.",
     image: IMG.blanket,
   },
 ];
@@ -190,39 +198,44 @@ const schema = [
   },
 ];
 
-const primaryButton =
-  "gk-button-gradient inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--radius)] px-6 text-base font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-transform hover:-translate-y-0.5";
-const ghostButton =
-  "inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--radius)] border border-white/25 bg-white/5 px-6 text-base font-semibold text-white backdrop-blur transition-colors hover:bg-white/15";
-
-function SectionHeading({ eyebrow, title, intro }: { eyebrow: string; title: string; intro?: string }) {
+function SectionHeading({
+  eyebrow,
+  title,
+  intro,
+  light = false,
+}: {
+  eyebrow: string;
+  title: string;
+  intro?: string;
+  light?: boolean;
+}) {
   return (
-    <div className="max-w-2xl">
-      <p className="text-sm font-bold uppercase tracking-[0.18em] text-primary">{eyebrow}</p>
+    <div>
+      <p className={`text-sm font-bold uppercase tracking-[0.18em] ${light ? "text-secondary" : "text-primary"}`}>{eyebrow}</p>
       <h2 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">{title}</h2>
-      {intro ? <p className="mt-3 text-foreground-muted sm:text-lg">{intro}</p> : null}
+      {intro ? <p className={`mt-3 sm:text-lg ${light ? "text-white/70" : "text-foreground-muted"}`}>{intro}</p> : null}
     </div>
   );
 }
 
 export default function BecomeADealerPage() {
   return (
-    <div className="bg-white text-foreground">
+    <div className="overflow-x-clip bg-white text-foreground">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
-      {/* HERO + FORM */}
+      {/* HERO: message on the left, application form on the right */}
       <section className="relative isolate overflow-hidden bg-[#150b0b] text-white">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_85%_0%,rgba(224,24,32,0.45),transparent_55%),radial-gradient(ellipse_at_0%_100%,rgba(248,120,24,0.22),transparent_50%)]"
         />
-        <div className="mx-auto grid max-w-7xl items-start gap-10 px-4 py-10 sm:px-6 md:py-16 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14 lg:px-8 lg:py-20">
+        <div className={`${WRAP} grid items-center gap-10 py-12 lg:grid-cols-2 lg:gap-16 lg:py-16`}>
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-white/90">
               <BadgeCheck className="size-4 text-secondary" aria-hidden />
               Dealership open · Minimum order 40 kits
             </p>
-            <h1 className="mt-5 text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="mt-5 text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl">
               Become a Graha Kavach Dealer
               <span className="mt-2 block bg-gradient-to-r from-[#ff5a3c] to-[#ffb347] bg-clip-text text-transparent">
                 Sell the kit every home needs.
@@ -233,47 +246,46 @@ export default function BecomeADealerPage() {
               made in Udaipur and supplied factory-direct to you.
             </p>
 
-            <ul className="mt-6 flex flex-wrap gap-2 text-sm font-semibold">
-              {["Manufacturer-direct", "ISO 9001:2015", "CE marked", "Made in Udaipur"].map((chip) => (
-                <li key={chip} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-white/15">
-                  <ShieldCheck className="size-4 text-secondary" aria-hidden />
-                  {chip}
+            <ul className="mt-6 space-y-3">
+              {heroPoints.map((point) => (
+                <li key={point} className="flex items-start gap-3 text-base font-medium">
+                  <span
+                    aria-hidden
+                    className="gk-button-gradient mt-0.5 flex size-6 flex-none items-center justify-center rounded-full text-xs font-bold text-white"
+                  >
+                    ✓
+                  </span>
+                  {point}
                 </li>
               ))}
             </ul>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#dealer-form" className={`${primaryButton} lg:hidden`}>
+              <Button href="#dealer-form" size="lg" className="lg:hidden">
                 Get dealer pricing
                 <ArrowRight className="size-5" aria-hidden />
-              </a>
-              <DealerContactLink href={DEALER_WHATSAPP_URL} channel="whatsapp" className={ghostButton}>
+              </Button>
+              <DealerContactLink href={DEALER_WHATSAPP_URL} channel="whatsapp">
                 <MessageCircle className="size-5 text-[#25D366]" aria-hidden />
                 WhatsApp us
               </DealerContactLink>
-              <DealerContactLink href={`tel:${DEALER_PHONE_TEL}`} channel="phone" className={`${ghostButton} hidden sm:inline-flex`}>
+              <DealerContactLink href={`tel:${DEALER_PHONE_TEL}`} channel="phone">
                 <Phone className="size-5" aria-hidden />
                 {DEALER_PHONE_DISPLAY}
               </DealerContactLink>
             </div>
 
-            <div className="relative mt-10 aspect-square max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl shadow-black/40 ring-1 ring-white/20 sm:aspect-[5/4] sm:max-w-xl">
-              <Image
-                src={IMG.kit}
-                alt="Graha Kavach 3-in-1 fire safety kit: 2 kg ABC fire extinguisher, automatic fire ball and fire blanket"
-                fill
-                priority
-                sizes="(min-width: 1024px) 560px, 100vw"
-                className="object-contain p-3"
-              />
-              <span className="absolute left-3 top-3 rounded-full bg-foreground px-3 py-1 text-xs font-bold text-white">
-                6 pieces · 1 box
-              </span>
+            <div className="mt-8 flex items-center gap-4">
+              <Image src={IMG.iso9001} alt="ISO 9001:2015 certification" width={72} height={72} className="size-[72px] rounded-xl bg-white object-contain p-1" />
+              <Image src={IMG.ce} alt="CE marking" width={72} height={72} className="size-[72px] rounded-xl bg-white object-contain p-1" />
+              <p className="text-sm font-semibold text-white/80">
+                Certified manufacturing
+                <span className="block font-normal text-white/60">Speciality Geochem, Udaipur</span>
+              </p>
             </div>
           </div>
 
-          {/* The form is in the first screen on desktop: ad visitors convert without scrolling. */}
-          <div id="dealer-form" className="scroll-mt-28 lg:sticky lg:top-28">
+          <div id="dealer-form" className="scroll-mt-28">
             <div className="rounded-3xl bg-white p-6 text-foreground shadow-2xl shadow-black/40 ring-1 ring-white/20 sm:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Dealer application</p>
               <h2 className="mt-1 text-2xl font-extrabold">Get dealer pricing &amp; terms</h2>
@@ -288,7 +300,7 @@ export default function BecomeADealerPage() {
 
       {/* STATS */}
       <section aria-label="At a glance" className="border-b border-foreground/10 bg-white">
-        <dl className="mx-auto grid max-w-7xl grid-cols-2 gap-y-6 px-4 py-8 sm:px-6 md:grid-cols-4 lg:px-8">
+        <dl className={`${WRAP} grid grid-cols-2 gap-y-6 py-8 md:grid-cols-4`}>
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col-reverse items-center text-center">
               <dt className="mt-1 max-w-[12rem] text-xs font-medium text-foreground-muted sm:text-sm">{stat.label}</dt>
@@ -300,60 +312,30 @@ export default function BecomeADealerPage() {
         </dl>
       </section>
 
-      {/* ONE KIT, THREE JOBS */}
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <SectionHeading
-          eyebrow="The product"
-          title="One kit. Three jobs. Every fire covered."
-          intro="Every home has a kitchen stove, an electrical panel and a front door. The Graha Kavach kit puts the right tool at each one."
-        />
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {threeJobs.map((job) => (
-            <article key={job.name} className="group overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-foreground/10 transition-shadow hover:shadow-xl">
-              <div className="relative aspect-video overflow-hidden">
-                <Image
-                  src={job.image}
-                  alt={`${job.name}, Graha Kavach`}
-                  fill
-                  sizes="(min-width: 768px) 400px, 100vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <span className="absolute left-3 top-3 rounded-full bg-foreground/85 px-3 py-1 text-xs font-bold tracking-wider text-white backdrop-blur">
-                  {job.step}
-                </span>
-              </div>
-              <div className="p-6">
-                <p className="text-sm font-extrabold uppercase tracking-wide text-primary">{job.role}</p>
-                <h3 className="mt-1 text-lg font-bold leading-snug">{job.name}</h3>
-                <p className="mt-2 text-sm text-foreground-muted">{job.text}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-
-        <div className="mt-10 grid items-center gap-8 overflow-hidden rounded-3xl bg-muted p-6 sm:p-8 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-md">
+      {/* THE KIT: product photo | what is in the box */}
+      <section className={SECTION}>
+        <div className={`${WRAP} grid items-center gap-10 lg:grid-cols-2 lg:gap-16`}>
+          <div className="relative aspect-square w-full overflow-hidden rounded-3xl bg-muted shadow-lg ring-1 ring-foreground/5">
             <Image
-              src={IMG.kitBox}
-              alt="Everything in one Graha Kavach kit box: fire extinguisher, fire blanket and automatic fire ball"
+              src={IMG.kit}
+              alt="Graha Kavach 3-in-1 fire safety kit: 2 kg ABC fire extinguisher, fire blanket and automatic fire ball"
               fill
-              sizes="(min-width: 1024px) 380px, 100vw"
-              className="object-cover"
+              sizes="(min-width: 1024px) 45vw, 90vw"
+              className="object-contain p-4"
             />
+            <span className="absolute left-4 top-4 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-bold text-white">
+              6 pieces · 1 box
+            </span>
           </div>
           <div>
-            <h3 className="text-xl font-extrabold sm:text-2xl">What is in every box</h3>
-            <p className="mt-2 text-foreground-muted">
-              Your customer opens one box and has everything needed to protect the kitchen, the panel and the
-              doorway.{" "}
-              <Link href="/fire-safety-kit" className="font-semibold text-primary underline-offset-4 hover:underline">
-                See the kit as customers see it
-              </Link>
-              .
-            </p>
-            <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+            <SectionHeading
+              eyebrow="The product"
+              title="The Graha Kavach 3-in-1 Fire Safety Kit"
+              intro="One complete kit with six pieces in the box. Your customer opens it and has everything needed to protect the kitchen, the electrical panel and the doorway."
+            />
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {kitItems.map((item) => (
-                <li key={item} className="flex items-start gap-3 rounded-xl bg-white p-3 text-sm font-semibold shadow-sm">
+                <li key={item} className="flex items-start gap-3 rounded-xl border border-foreground/10 bg-white p-3.5 text-sm font-semibold shadow-sm">
                   <span className="mt-0.5 flex size-5 flex-none items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
                     ✓
                   </span>
@@ -361,20 +343,66 @@ export default function BecomeADealerPage() {
                 </li>
               ))}
             </ul>
+            <div className="mt-8">
+              <Button href="#dealer-form" size="lg">
+                Get dealer pricing
+                <ArrowRight className="size-5" aria-hidden />
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* WHY PARTNER */}
-      <section className="bg-foreground text-white">
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-          <div className="max-w-2xl">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-secondary">Why partner with us</p>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
-              A product that sells itself, from a factory you can trust
-            </h2>
+      {/* ONE KIT, THREE JOBS: photo | text, alternating */}
+      <section className={`bg-muted ${SECTION}`}>
+        <div className={WRAP}>
+          <SectionHeading
+            eyebrow="How the kit protects"
+            title="One kit. Three jobs. Every fire covered."
+            intro="Every home has a kitchen stove, an electrical panel and a front door. The kit puts the right tool at each one."
+          />
+          <div className="mt-12 space-y-12 lg:space-y-16">
+            {threeJobs.map((job, index) => (
+              <article key={job.name} className="grid items-center gap-6 lg:grid-cols-2 lg:gap-16">
+                <div className={`relative aspect-video overflow-hidden rounded-3xl shadow-xl ring-1 ring-foreground/10 ${index % 2 === 1 ? "lg:order-2" : ""}`}>
+                  <Image
+                    src={job.image}
+                    alt={`${job.name}, Graha Kavach`}
+                    fill
+                    sizes="(min-width: 1024px) 45vw, 90vw"
+                    className="object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="gk-text-gradient text-6xl font-black leading-none">{job.step}</p>
+                  <p className="mt-3 text-sm font-extrabold uppercase tracking-[0.18em] text-primary">{job.role}</p>
+                  <h3 className="mt-2 text-2xl font-extrabold leading-snug sm:text-3xl">{job.name}</h3>
+                  <p className="mt-3 text-foreground-muted sm:text-lg">{job.text}</p>
+                </div>
+              </article>
+            ))}
           </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        </div>
+      </section>
+
+      {/* WHY PARTNER: heading | 2x2 cards */}
+      <section className={`bg-foreground text-white ${SECTION}`}>
+        <div className={`${WRAP} grid items-center gap-10 lg:grid-cols-2 lg:gap-16`}>
+          <div>
+            <SectionHeading
+              light
+              eyebrow="Why partner with us"
+              title="A product that sells itself, from a factory you can trust"
+              intro="You carry a kit that customers understand in seconds, backed by the people who make it."
+            />
+            <div className="mt-8">
+              <Button href="#dealer-form" size="lg">
+                Become a dealer
+                <ArrowRight className="size-5" aria-hidden />
+              </Button>
+            </div>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
             {reasons.map((reason) => (
               <div key={reason.title} className="rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 transition-colors hover:bg-white/10">
                 <span className="gk-button-gradient flex size-12 items-center justify-center rounded-xl text-white">
@@ -388,51 +416,53 @@ export default function BecomeADealerPage() {
         </div>
       </section>
 
-      {/* ORDER TERMS */}
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <SectionHeading
-          eyebrow="Dealer order terms"
-          title="Simple terms to get you started"
-          intro="Pricing is shared directly by our team, after we speak with you."
-        />
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
-          <div className="rounded-3xl border border-foreground/10 bg-gradient-to-br from-primary-subtle to-white p-8 shadow-sm">
-            <p className="text-sm font-bold uppercase tracking-wide text-primary">Minimum order</p>
-            <p className="mt-2 text-5xl font-black">40 kits</p>
-            <p className="mt-3 text-sm text-foreground-muted">Minimum order quantity for regular dealer orders.</p>
-          </div>
-          <div className="rounded-3xl border border-foreground/10 bg-gradient-to-br from-secondary-subtle to-white p-8 shadow-sm">
-            <p className="text-sm font-bold uppercase tracking-wide text-primary">Dealer pricing</p>
-            <p className="mt-2 text-3xl font-black">Shared on enquiry</p>
-            <p className="mt-3 text-sm text-foreground-muted">
-              Send your details and our team will call you with pricing and full terms.
-            </p>
-            <a href="#dealer-form" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-primary">
-              Request pricing <ArrowRight className="size-4" aria-hidden />
-            </a>
-          </div>
-        </div>
-
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {partnerBenefits.map((benefit) => (
-            <div key={benefit.title} className="rounded-2xl border border-foreground/10 p-6">
-              <benefit.icon className="size-7 text-primary" aria-hidden />
-              <h3 className="mt-4 font-bold">{benefit.title}</h3>
-              <p className="mt-1 text-sm text-foreground-muted">{benefit.text}</p>
+      {/* ORDER TERMS: MOQ and pricing | partner benefits */}
+      <section className={SECTION}>
+        <div className={`${WRAP} grid gap-10 lg:grid-cols-2 lg:gap-16`}>
+          <div>
+            <SectionHeading
+              eyebrow="Dealer order terms"
+              title="Simple terms to get you started"
+              intro="Pricing is shared directly by our team, after we speak with you."
+            />
+            <div className="mt-8 space-y-5">
+              <div className="rounded-3xl border border-foreground/10 bg-gradient-to-br from-primary-subtle to-white p-7 shadow-sm">
+                <p className="text-sm font-bold uppercase tracking-wide text-primary">Minimum order</p>
+                <p className="mt-2 text-5xl font-black">40 kits</p>
+                <p className="mt-2 text-sm text-foreground-muted">Minimum order quantity for regular dealer orders.</p>
+              </div>
+              <div className="rounded-3xl border border-foreground/10 bg-gradient-to-br from-secondary-subtle to-white p-7 shadow-sm">
+                <p className="text-sm font-bold uppercase tracking-wide text-primary">Dealer pricing</p>
+                <p className="mt-2 text-3xl font-black">Shared on enquiry</p>
+                <p className="mt-2 text-sm text-foreground-muted">
+                  Send your details and our team will call you with pricing and full terms.
+                </p>
+              </div>
             </div>
-          ))}
+          </div>
+          <div className="grid content-start gap-5 sm:grid-cols-2 lg:self-end">
+            {partnerBenefits.map((benefit) => (
+              <div key={benefit.title} className="rounded-2xl border border-foreground/10 bg-white p-6 shadow-sm">
+                <span className="flex size-12 items-center justify-center rounded-xl bg-primary-subtle text-primary">
+                  <benefit.icon className="size-6" aria-hidden />
+                </span>
+                <h3 className="mt-4 font-bold">{benefit.title}</h3>
+                <p className="mt-1 text-sm text-foreground-muted">{benefit.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* MANUFACTURER */}
-      <section className="bg-muted">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-20">
+      {/* MANUFACTURER: factory photo | story */}
+      <section className={`bg-muted ${SECTION}`}>
+        <div className={`${WRAP} grid items-center gap-10 lg:grid-cols-2 lg:gap-16`}>
           <div className="relative aspect-video overflow-hidden rounded-3xl shadow-xl">
             <Image
               src={IMG.factory}
               alt="Speciality Geochem factory entrance in the RIICO industrial area, Udaipur"
               fill
-              sizes="(min-width: 1024px) 560px, 100vw"
+              sizes="(min-width: 1024px) 45vw, 90vw"
               className="object-cover"
             />
           </div>
@@ -460,63 +490,90 @@ export default function BecomeADealerPage() {
         </div>
       </section>
 
-      {/* WHO + STEPS */}
-      <section className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-20">
-        <div>
-          <h2 className="flex items-center gap-3 text-2xl font-extrabold sm:text-3xl">
-            <Store className="size-8 text-primary" aria-hidden /> Who can apply
-          </h2>
-          <ul className="mt-6 space-y-3">
-            {whoCanApply.map((who) => (
-              <li key={who} className="flex items-start gap-3 rounded-xl border border-foreground/10 p-4">
-                <span
-                  aria-hidden
-                  className="flex size-6 flex-none items-center justify-center rounded-full bg-primary text-sm font-bold text-white"
-                >
-                  ✓
-                </span>
-                <span className="font-medium">{who}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="relative mt-6 aspect-[4/3] overflow-hidden rounded-2xl shadow-md">
+      {/* WHO CAN APPLY: list | photo */}
+      <section className={SECTION}>
+        <div className={`${WRAP} grid items-stretch gap-10 lg:grid-cols-2 lg:gap-16`}>
+          <div>
+            <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.18em] text-primary">
+              <Store className="size-4" aria-hidden /> Who can apply
+            </p>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
+              If you sell to homes and businesses, this kit fits your counter
+            </h2>
+            <ul className="mt-6 space-y-3">
+              {whoCanApply.map((who) => (
+                <li key={who} className="flex items-start gap-3 rounded-xl border border-foreground/10 bg-white p-4 shadow-sm">
+                  <span
+                    aria-hidden
+                    className="flex size-6 flex-none items-center justify-center rounded-full bg-primary text-sm font-bold text-white"
+                  >
+                    ✓
+                  </span>
+                  <span className="font-medium">{who}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="relative min-h-[360px] overflow-hidden rounded-3xl shadow-xl ring-1 ring-foreground/10">
             <Image
               src={IMG.kitHome}
-              alt="Graha Kavach fire blanket, extinguisher and fire ball placed in a kitchen and by the electrical panel"
+              alt="Graha Kavach fire blanket in the kitchen, extinguisher on the wall and fire ball above the electrical panel"
               fill
-              sizes="(min-width: 1024px) 560px, 100vw"
-              className="object-cover object-top"
+              sizes="(min-width: 1024px) 45vw, 90vw"
+              className="object-cover"
             />
           </div>
         </div>
-        <div>
-          <h2 className="flex items-center gap-3 text-2xl font-extrabold sm:text-3xl">
-            <Truck className="size-8 text-primary" aria-hidden /> How it works
-          </h2>
-          <ol className="relative mt-6 space-y-8 border-l-2 border-dashed border-primary/30 pl-8">
-            {steps.map((step, index) => (
-              <li key={step.title} className="relative">
-                <span className="gk-button-gradient absolute -left-[3.2rem] flex size-11 items-center justify-center rounded-full text-base font-extrabold text-primary-foreground ring-4 ring-white">
-                  {index + 1}
-                </span>
-                <h3 className="text-lg font-bold">{step.title}</h3>
-                <p className="mt-1 text-foreground-muted">{step.text}</p>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-8 rounded-2xl bg-secondary-subtle p-6">
-            <Handshake className="size-8 text-primary" aria-hidden />
-            <p className="mt-3 font-bold">Ready to talk?</p>
-            <p className="mt-1 text-sm text-foreground-muted">
-              Call {DEALER_PHONE_DISPLAY} or write to {DEALER_EMAIL}, or send the form and we will call you.
+      </section>
+
+      {/* HOW IT WORKS: steps | contact card */}
+      <section className={`bg-muted ${SECTION}`}>
+        <div className={`${WRAP} grid items-center gap-10 lg:grid-cols-2 lg:gap-16`}>
+          <div>
+            <SectionHeading eyebrow="How it works" title="Three steps to your first order" />
+            <ol className="relative mt-8 space-y-8 border-l-2 border-dashed border-primary/30 pl-8">
+              {steps.map((step, index) => (
+                <li key={step.title} className="relative">
+                  <span className="gk-button-gradient absolute -left-[3.2rem] flex size-11 items-center justify-center rounded-full text-base font-extrabold text-primary-foreground ring-4 ring-muted">
+                    {index + 1}
+                  </span>
+                  <h3 className="text-lg font-bold">{step.title}</h3>
+                  <p className="mt-1 text-foreground-muted">{step.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div className="rounded-3xl bg-white p-7 shadow-lg ring-1 ring-foreground/10 sm:p-9">
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-primary">Prefer to talk first?</p>
+            <h3 className="mt-2 text-2xl font-extrabold">Speak to our dealer team</h3>
+            <p className="mt-2 text-foreground-muted">
+              Call or message us. We will explain the kit, the terms and how your first order works.
             </p>
+            <div className="mt-6 space-y-3 text-sm font-semibold">
+              <p className="flex items-center gap-3">
+                <Phone className="size-5 text-primary" aria-hidden /> {DEALER_PHONE_DISPLAY}
+              </p>
+              <p className="flex items-center gap-3">
+                <Mail className="size-5 text-primary" aria-hidden /> {DEALER_EMAIL}
+              </p>
+            </div>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <DealerContactLink href={DEALER_WHATSAPP_URL} channel="whatsapp">
+                <MessageCircle className="size-5 text-[#25D366]" aria-hidden />
+                WhatsApp us
+              </DealerContactLink>
+              <DealerContactLink href={`tel:${DEALER_PHONE_TEL}`} channel="phone" variant="primary">
+                <Phone className="size-5" aria-hidden />
+                Call now
+              </DealerContactLink>
+            </div>
           </div>
         </div>
       </section>
 
       {/* TERMS */}
-      <section id="terms" className="bg-muted">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+      <section id="terms" className={SECTION}>
+        <div className={WRAP}>
           <SectionHeading
             eyebrow="The agreement"
             title="Dealer terms and conditions"
@@ -524,7 +581,7 @@ export default function BecomeADealerPage() {
           />
           <ol className="mt-8 grid gap-4 md:grid-cols-2">
             {terms.map((term, index) => (
-              <li key={term.title} className="flex gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-foreground/5">
+              <li key={term.title} className="flex gap-4 rounded-2xl border border-foreground/10 bg-white p-5 shadow-sm">
                 <span className="flex size-9 flex-none items-center justify-center rounded-full bg-primary-subtle text-sm font-extrabold text-primary">
                   {index + 1}
                 </span>
@@ -538,45 +595,65 @@ export default function BecomeADealerPage() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <SectionHeading eyebrow="Questions" title="Dealer FAQs" />
-        <div className="mt-8 divide-y divide-foreground/10 rounded-2xl border border-foreground/10">
-          {faqs.map((faq) => (
-            <details key={faq.q} className="group p-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
-                {faq.q}
-                <ChevronDown className="size-5 flex-none text-primary transition-transform group-open:rotate-180" aria-hidden />
-              </summary>
-              <p className="mt-3 text-sm text-foreground-muted">{faq.a}</p>
-            </details>
-          ))}
+      {/* FAQ: heading | accordion */}
+      <section className={`bg-muted ${SECTION}`}>
+        <div className={`${WRAP} grid items-start gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16`}>
+          <div>
+            <SectionHeading eyebrow="Questions" title="Dealer FAQs" intro="Quick answers before you apply." />
+            <div className="mt-6">
+              <Button href="#dealer-form" size="lg">
+                Apply for dealership
+                <ArrowRight className="size-5" aria-hidden />
+              </Button>
+            </div>
+          </div>
+          <div className="divide-y divide-foreground/10 rounded-2xl border border-foreground/10 bg-white shadow-sm">
+            {faqs.map((faq) => (
+              <details key={faq.q} className="group p-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
+                  {faq.q}
+                  <ChevronDown className="size-5 flex-none text-primary transition-transform group-open:rotate-180" aria-hidden />
+                </summary>
+                <p className="mt-3 text-sm text-foreground-muted">{faq.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* CLOSING CTA */}
+      {/* CLOSING CTA: message | photo */}
       <section className="relative isolate overflow-hidden bg-[#150b0b] text-white">
-        <Image
-          src={IMG.kitCounter}
-          alt=""
-          fill
-          sizes="100vw"
-          className="-z-10 object-cover opacity-20"
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_100%_50%,rgba(224,24,32,0.4),transparent_55%)]"
         />
-        <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 px-4 py-16 text-center sm:px-6">
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Ready to stock the Graha Kavach kit?</h2>
-          <p className="max-w-xl text-white/80 sm:text-lg">
-            Send your details. Our team will call you with dealer pricing and terms.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <a href="#dealer-form" className={primaryButton}>
-              Apply for dealership
-              <ArrowRight className="size-5" aria-hidden />
-            </a>
-            <DealerContactLink href={DEALER_WHATSAPP_URL} channel="whatsapp" className={ghostButton}>
-              <MessageCircle className="size-5 text-[#25D366]" aria-hidden />
-              WhatsApp us
-            </DealerContactLink>
+        <div className={`${WRAP} grid items-center gap-10 py-14 lg:grid-cols-2 lg:gap-16 lg:py-20`}>
+          <div>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+              Ready to stock the Graha Kavach kit?
+            </h2>
+            <p className="mt-4 max-w-xl text-white/80 sm:text-lg">
+              Send your details. Our team will call you with dealer pricing and terms.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button href="#dealer-form" size="lg">
+                Apply for dealership
+                <ArrowRight className="size-5" aria-hidden />
+              </Button>
+              <DealerContactLink href={DEALER_WHATSAPP_URL} channel="whatsapp">
+                <MessageCircle className="size-5 text-[#25D366]" aria-hidden />
+                WhatsApp us
+              </DealerContactLink>
+            </div>
+          </div>
+          <div className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl shadow-black/50 ring-1 ring-white/20">
+            <Image
+              src={IMG.kitCounter}
+              alt="Graha Kavach fire extinguisher, fire ball and fire blanket on a kitchen counter"
+              fill
+              sizes="(min-width: 1024px) 45vw, 90vw"
+              className="object-cover"
+            />
           </div>
         </div>
       </section>
