@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 
 /** Routes that are standalone funnels: no site header, footer, tab bar or cart drawer. */
-const BARE_PREFIXES = ["/book-now", "/lp"];
+const BARE_PREFIXES = ["/book-now", "/lp", "/become-a-dealer"];
 
 type Props = {
   /** Rendered above the page: header and its spacer. */

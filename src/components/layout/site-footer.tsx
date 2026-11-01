@@ -29,6 +29,7 @@ const DEFAULT_POLICIES: NavItem[] = [
 
 const HELP: NavItem[] = [
   { label: "Contact Us", href: "/contact" },
+  { label: "Become a Dealer", href: "/become-a-dealer" },
   { label: "FAQs", href: "/#faq" },
   { label: "How to Use", href: "/#how-it-works" },
   { label: "Placement Guide", href: "/#placement" },
