@@ -39,7 +39,7 @@ final class GK_Seed {
 	 */
 	private static function values(): array {
 		return array(
-			'contact_phone_primary' => '+91 7891111390',
+			'contact_phone_primary' => '+91 78911 11390',
 			'contact_email_primary' => 'grahakavach@gmail.com',
 			'contact_address'       => "103, Ostwal Plaza 2,\nSundarwas, Udaipur (Raj.)\nIndia",
 			'contact_maps_url'      => 'https://maps.google.com/maps?q=103%2C%20Ostwal%20Plaza%202%2C%20Sundarwas%2C%20Udaipur%20%28Raj.%29%20India',

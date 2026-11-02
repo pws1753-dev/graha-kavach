@@ -3,7 +3,7 @@
  * Plugin Name:       Graha Kavach Headless Core
  * Plugin URI:        https://grahakavach.in
  * Description:       Project-specific integration code for the Graha Kavach headless stack. Keeps backend noindex, exposes global settings to GraphQL without ACF Pro, signs revalidation webhooks to Next.js, and applies a strict CORS allowlist.
- * Version:           1.3.3
+ * Version:           1.3.4
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Graha Kavach
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GK_HEADLESS_VERSION', '1.3.3' );
+define( 'GK_HEADLESS_VERSION', '1.3.4' );
 define( 'GK_HEADLESS_FILE', __FILE__ );
 define( 'GK_HEADLESS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -57,6 +57,7 @@ require_once GK_HEADLESS_DIR . 'includes/class-gk-fields.php';
 require_once GK_HEADLESS_DIR . 'includes/class-gk-content-graphql.php';
 require_once GK_HEADLESS_DIR . 'includes/class-gk-seed.php';
 require_once GK_HEADLESS_DIR . 'includes/class-gk-landing.php';
+require_once GK_HEADLESS_DIR . 'includes/class-gk-contact-migrate.php';
 
 /**
  * Boot every module.

@@ -46,7 +46,7 @@ const certificationFields = `
 `;
 
 export const GLOBAL_SETTINGS_QUERY = `
-  query GlobalSiteSettings {
+  query GlobalSiteSettingsV2 {
     grahaKavachSettings {
       logoPrimary { ${mediaFields} }
       phonePrimary
