@@ -387,8 +387,8 @@ function OrderConfirmationContent() {
             <div className="mt-4 space-y-2 text-xs">
               <p>
                 <span className="text-stone-400">WhatsApp / Phone:</span>{" "}
-                <a href="tel:+919610251841" className="font-medium text-white underline">
-                  +91 96102 51841
+                <a href="tel:+917891111390" className="font-medium text-white underline">
+                  +91 78911 11390
                 </a>
               </p>
               <p>

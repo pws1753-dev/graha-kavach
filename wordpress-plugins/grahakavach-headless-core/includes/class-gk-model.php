@@ -53,7 +53,7 @@ final class GK_Model {
 			array( 'name' => 'contact_phone_alternate', 'label' => 'Alternate phone', 'type' => 'text', 'gql' => 'phoneAlternate', 'tab' => 'Contact' ),
 			array( 'name' => 'contact_email_primary', 'label' => 'Primary email', 'type' => 'email', 'gql' => 'emailPrimary', 'tab' => 'Contact' ),
 			array( 'name' => 'contact_email_support', 'label' => 'Support email', 'type' => 'email', 'gql' => 'emailSupport', 'tab' => 'Contact' ),
-			array( 'name' => 'contact_whatsapp_number', 'label' => 'WhatsApp number', 'type' => 'text', 'gql' => 'whatsappNumber', 'tab' => 'Contact', 'hint' => 'Digits with country code, e.g. 919610251841. Leave empty if there is no WhatsApp line.' ),
+			array( 'name' => 'contact_whatsapp_number', 'label' => 'WhatsApp number', 'type' => 'text', 'gql' => 'whatsappNumber', 'tab' => 'Contact', 'hint' => 'Digits with country code, e.g. 917891111390. Leave empty if there is no WhatsApp line.' ),
 			array( 'name' => 'contact_whatsapp_message', 'label' => 'WhatsApp default message', 'type' => 'textarea', 'gql' => 'whatsappMessage', 'tab' => 'Contact' ),
 			array( 'name' => 'contact_address', 'label' => 'Head office address', 'type' => 'textarea', 'gql' => 'address', 'tab' => 'Contact' ),
 			array( 'name' => 'contact_maps_url', 'label' => 'Google Maps URL', 'type' => 'url', 'gql' => 'mapsUrl', 'tab' => 'Contact' ),

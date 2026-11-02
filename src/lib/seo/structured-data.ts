@@ -38,7 +38,7 @@ export function buildOrganizationSchema() {
         addressCountry: "IN",
       },
     },
-    telephone: "+91-9610251841",
+    telephone: "+91-7891111390",
     email: "grahakavach@gmail.com",
     address: {
       "@type": "PostalAddress",
@@ -50,7 +50,7 @@ export function buildOrganizationSchema() {
     },
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: "+91-9610251841",
+      telephone: "+91-7891111390",
       contactType: "customer service",
       areaServed: "IN",
       availableLanguage: ["en", "hi"],
@@ -310,7 +310,7 @@ export function buildLocalBusinessSchema() {
     name: "Graha Kavach — Speciality Geochem",
     description: "Certified fire safety equipment manufacturing and 3-in-1 domestic fire safety kits in Udaipur, Rajasthan.",
     url: BASE_URL,
-    telephone: "+91-9610251841",
+    telephone: "+91-7891111390",
     email: "grahakavach@gmail.com",
     image: `${BASE_URL}/brand/graha-kavach-logo.png`,
     address: {

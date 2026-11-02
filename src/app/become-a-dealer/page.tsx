@@ -71,13 +71,13 @@ export const metadata: Metadata = {
 const heroPoints = [
   "Factory-direct supply from Udaipur. No middlemen.",
   "ISO 9001:2015 certified, CE marked, tested in our own lab.",
-  "One 6-piece box: extinguisher, fire ball and fire blanket.",
+  "One 3-piece box: extinguisher, fire ball and fire blanket.",
 ];
 
 const stats = [
   { value: "2010", label: "Making fire safety gear since" },
   { value: "2", label: "Own RIICO units in Udaipur" },
-  { value: "6", label: "Pieces in every kit box" },
+  { value: "3", label: "Pieces in every kit box" },
   { value: "40", label: "Kits minimum order" },
 ];
 
@@ -109,9 +109,6 @@ const kitItems = [
   "2 kg ABC dry powder fire extinguisher",
   "Automatic fire extinguisher ball",
   "Fire blanket, 1 m x 1 m",
-  "Extinguisher wall bracket",
-  "Fire ball stand",
-  "Screws and wall plugs",
 ];
 
 const reasons = [
@@ -128,7 +125,7 @@ const reasons = [
   {
     icon: Boxes,
     title: "One box. Nothing else to sell.",
-    text: "Six pieces with every screw and wall plug included. Your customer needs nothing else to get it on the wall.",
+    text: "Three pieces with every screw and wall plug included. Your customer needs nothing else to get it on the wall.",
   },
   {
     icon: Home,
@@ -324,14 +321,14 @@ export default function BecomeADealerPage() {
               className="object-contain p-4"
             />
             <span className="absolute left-4 top-4 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-bold text-white">
-              6 pieces · 1 box
+              3 pieces · 1 box
             </span>
           </div>
           <div>
             <SectionHeading
               eyebrow="The product"
               title="The Graha Kavach 3-in-1 Fire Safety Kit"
-              intro="One complete kit with six pieces in the box. Your customer opens it and has everything needed to protect the kitchen, the electrical panel and the doorway."
+              intro="One complete kit with three pieces in the box. Your customer opens it and has everything needed to protect the kitchen, the electrical panel and the doorway."
             />
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {kitItems.map((item) => (

@@ -63,7 +63,7 @@ The Next.js storefront automatically injects Google-compliant Schema.org JSON-LD
 
 | Schema Type | Applied Where | Details |
 |---|---|---|
-| **Organization** | Homepage, Contact | Brand name, logo, phone (`+91 9610251841`), email, Udaipur address, social links (Facebook, Instagram). |
+| **Organization** | Homepage, Contact | Brand name, logo, phone (`+91 7891111390`), email, Udaipur address, social links (Facebook, Instagram). |
 | **WebSite** | Homepage | Site name, canonical URL, language `en-IN`. |
 | **Product & Offer** | Homepage, `/fire-safety-kit` | Name, description, image gallery, SKU, price (₹2,499), currency (`INR`), stock status, seller (`Speciality Geochem`). |
 | **AggregateRating & Review** | `/fire-safety-kit` | **Strict Integrity**: Only output if real approved reviews exist in WooCommerce (`rating_count > 0`). Never fabricated. |

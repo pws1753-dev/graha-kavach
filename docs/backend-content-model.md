@@ -18,7 +18,7 @@ Fields:
 | --- | --- | --- | --- |
 | `brandName` | Text | Yes | Default: `Graha Kavach` |
 | `announcement` | Text | No | Header announcement bar |
-| `contact.phone` | Text | Yes | Initial value: `+91 9610251841` |
+| `contact.phone` | Text | Yes | Initial value: `+91 7891111390` |
 | `contact.email` | Email | Yes | Initial value: `grahakavach@gmail.com` |
 | `contact.address` | Textarea | Yes | Initial value: `103, Ostwal Plaza 2, Sundarwas, Udaipur (Raj.) India` |
 | `contact.whatsapp` | Text | No | Do not guess if missing |

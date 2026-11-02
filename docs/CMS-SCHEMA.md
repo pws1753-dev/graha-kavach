@@ -110,7 +110,7 @@ content, not frontend constants:
 
 | Field | Value |
 | --- | --- |
-| `phonePrimary` | `+91 9610251841` |
+| `phonePrimary` | `+91 7891111390` |
 | `emailPrimary` | `grahakavach@gmail.com` |
 | `address` | `103, Ostwal Plaza 2, Sundarwas, Udaipur (Raj.) India` |
 | `mapsUrl` | Google Maps link for that address |

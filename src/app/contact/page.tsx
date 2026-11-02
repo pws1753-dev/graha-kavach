@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildSeoMetadata({
     fallbackTitle: "Contact Graha Kavach | Fire Safety Kit Orders & Bulk Supply",
     fallbackDescription:
-      "Call +91 9610251841 or WhatsApp Graha Kavach, Udaipur, for fire safety kit orders, bulk fire extinguisher supply for societies and home safety advice.",
+      "Call +91 7891111390 or WhatsApp Graha Kavach, Udaipur, for fire safety kit orders, bulk fire extinguisher supply for societies and home safety advice.",
     path: "/contact",
     keywords: [
       "contact Graha Kavach",
@@ -57,7 +57,7 @@ export default async function ContactPage() {
     "@graph": [breadcrumbSchema, orgSchema, contactPageSchema, localBusinessSchema],
   };
 
-  const phone = settings.contact.phone || "+91 96102 51841";
+  const phone = settings.contact.phone || "+91 78911 11390";
   const cleanPhone = phone.replace(/[^0-9+]/g, "");
   const email = settings.contact.email || "grahakavach@gmail.com";
   const address =
