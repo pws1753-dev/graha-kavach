@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Accordion } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { CodBookingNote } from "@/components/commerce/cod-booking-note";
 import { Price } from "@/components/commerce/price";
 import { PurchaseActions } from "@/components/commerce/purchase-actions";
 import { SecurePaymentStrip } from "@/components/commerce/secure-payment-strip";
@@ -19,6 +20,7 @@ import {
   wooProductGallery,
   wooProductToSummary,
 } from "@/lib/woocommerce/adapters";
+import { getCodAdvanceConfig } from "@/lib/woocommerce/checkout-settings";
 import { getPrimaryProduct } from "@/lib/woocommerce/products";
 import { getProductReviews } from "@/lib/woocommerce/reviews";
 import { getPosts, getProductContent } from "@/lib/wordpress/adapters";
@@ -201,7 +203,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FireSafetyKitPage() {
-  const { product, content, reviews, relatedPosts } = await getKitData();
+  // The COD advance is read from the WooCommerce deposit settings, so the amounts follow wp-admin.
+  const [{ product, content, reviews, relatedPosts }, codAdvance] = await Promise.all([getKitData(), getCodAdvanceConfig()]);
   const summary = wooProductToSummary(product);
   // Product images come only from the WooCommerce product, so what is shown matches the store admin.
   const gallery = wooProductGallery(product);
@@ -295,6 +298,13 @@ export default async function FireSafetyKitPage() {
               <StockStatus status={summary.stockStatus} quantity={product.stock_quantity} />
             </div>
 
+            <CodBookingNote
+              className="mt-4"
+              priceMinor={summary.priceMinor}
+              currency={summary.currency}
+              config={codAdvance}
+            />
+
             {product.status !== "publish" ? (
               <div className="mt-6 border border-warning bg-warning-subtle p-4 text-sm text-warning">
                 This product is not available to order right now.
@@ -321,7 +331,7 @@ export default async function FireSafetyKitPage() {
               <span>Made in Udaipur by Speciality Geochem</span>
             </div>
 
-            <SecurePaymentStrip className="mt-6" />
+            <SecurePaymentStrip className="mt-6" stacked />
           </div>
         </div>
       </section>

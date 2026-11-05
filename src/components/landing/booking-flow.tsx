@@ -6,6 +6,7 @@ import { trackInitiateCheckout, trackPurchase } from "@/lib/analytics/meta-pixel
 import { reportVerifiedPurchase } from "@/lib/analytics/google-purchase";
 import type { CountdownConfig } from "@/lib/landing/countdown";
 import { payWithRazorpay } from "@/lib/razorpay/client";
+import { CARD_LOGOS, PaymentLogos, UPI_LOGOS, type PaymentLogoId } from "@/components/commerce/payment-logos";
 import { INDIAN_STATES } from "@/lib/validation/checkout";
 import { CountdownProvider, Timer, useCountdown } from "./countdown";
 import { ArrowIcon } from "./rich";
@@ -47,9 +48,9 @@ type Errors = Partial<Record<keyof Fields, string>>;
 const STORAGE_KEY_PREFIX = "gk_booking_done";
 const STORAGE_TTL_MS = 30 * 60 * 1000;
 
-const METHODS: Array<{ id: Method; label: string; hint?: string }> = [
-  { id: "upi", label: "UPI", hint: "कोई भी UPI ऐप" },
-  { id: "card", label: "डेबिट / क्रेडिट कार्ड" },
+const METHODS: Array<{ id: Method; label: string; hint?: string; logos?: PaymentLogoId[] }> = [
+  { id: "upi", label: "UPI", hint: "कोई भी UPI ऐप", logos: UPI_LOGOS },
+  { id: "card", label: "डेबिट / क्रेडिट कार्ड", logos: CARD_LOGOS },
   { id: "netbanking", label: "नेट बैंकिंग" },
 ];
 
@@ -467,6 +468,7 @@ export function BookingFlow({
                     <span className="text-[17px] leading-tight font-bold">{option.label}</span>
                     {option.hint ? <span className="text-sm leading-tight text-foreground-muted">{option.hint}</span> : null}
                   </span>
+                  {option.logos ? <PaymentLogos ids={option.logos} height={16} className="ml-auto justify-end" /> : null}
                 </label>
               );
             })}
