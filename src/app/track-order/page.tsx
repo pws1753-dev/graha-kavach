@@ -10,6 +10,11 @@ type TrackingShipment = {
   trackingNumber: string;
   trackingUrl: string;
   shippedOn: string | null;
+  status: string | null;
+  statusLabel: string | null;
+  estimatedDelivery: string | null;
+  lastEvent: string | null;
+  events: { message: string; location: string; time: string }[];
 };
 
 type TrackingResult = {
@@ -370,6 +375,29 @@ export default function TrackOrderPage() {
                             <p className="mt-0.5 text-[11px] text-muted-foreground">
                               Handed over on {s.shippedOn}
                             </p>
+                          ) : null}
+                          {s.statusLabel ? (
+                            <p className="mt-2 text-sm font-semibold text-emerald-900">
+                              {s.statusLabel}
+                              {s.estimatedDelivery && s.status !== "delivered" ? (
+                                <span className="ml-2 text-xs font-normal text-stone-600">
+                                  Expected by{" "}
+                                  {new Date(s.estimatedDelivery).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                </span>
+                              ) : null}
+                            </p>
+                          ) : null}
+                          {s.events.length > 0 ? (
+                            <ol className="mt-3 space-y-2 border-l-2 border-emerald-200 pl-4">
+                              {s.events.slice(0, 8).map((event, i) => (
+                                <li key={i} className="relative text-xs text-stone-700">
+                                  <span className="absolute -left-[22px] top-1 size-2 rounded-full bg-emerald-500" />
+                                  <span className="font-medium text-stone-900">{event.message}</span>
+                                  {event.location ? <span className="text-stone-500"> · {event.location}</span> : null}
+                                  {event.time ? <div className="text-[11px] text-muted-foreground">{event.time}</div> : null}
+                                </li>
+                              ))}
+                            </ol>
                           ) : null}
                         </div>
 

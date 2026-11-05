@@ -20,6 +20,17 @@ type ASTTrackingItem = {
   date_shipped: string;
 };
 
+/** Live courier status kept by TrackShip, exposed by the headless-core plugin. */
+type LiveShipment = {
+  tracking_number: string;
+  status: string;
+  status_label: string;
+  est_delivery_date: string;
+  last_event: string;
+  last_event_time: string;
+  events: { message: string; location: string; time: string }[];
+};
+
 type RawOrder = {
   id: number;
   number: string;
@@ -193,7 +204,22 @@ export async function POST(request: Request) {
       shipments = [];
     }
 
-    const { state, isShipped } = deriveOrderState(order.status, shipments.length);
+    let live: LiveShipment[] = [];
+    try {
+      const res = await wooRequest<{ shipments?: LiveShipment[] }>({
+        path: `/orders/${order.id}/shipment-status`,
+        revalidate: false,
+      });
+      live = res.shipments ?? [];
+    } catch {
+      live = [];
+    }
+
+    const derived = deriveOrderState(order.status, shipments.length);
+    // Every parcel delivered means the order is delivered, whatever the Woo status says.
+    const allDelivered = live.length > 0 && live.length >= shipments.length && live.every((l) => l.status === "delivered");
+    const state = allDelivered ? ("completed" as const) : derived.state;
+    const isShipped = derived.isShipped;
 
     // Return sanitized service contract response per docs/TRACKING.md §6
     const trackingResponse = {
@@ -201,12 +227,20 @@ export async function POST(request: Request) {
       placedOn: order.date_created,
       state,
       isShipped,
-      shipments: shipments.map((s) => ({
-        carrier: s.tracking_provider,
-        trackingNumber: s.tracking_number,
-        trackingUrl: s.tracking_link,
-        shippedOn: s.date_shipped || null,
-      })),
+      shipments: shipments.map((s) => {
+        const status = live.find((l) => l.tracking_number === s.tracking_number);
+        return {
+          carrier: s.tracking_provider,
+          trackingNumber: s.tracking_number,
+          trackingUrl: s.tracking_link,
+          shippedOn: s.date_shipped || null,
+          status: status?.status ?? null,
+          statusLabel: status?.status_label ?? null,
+          estimatedDelivery: status?.est_delivery_date || null,
+          lastEvent: status?.last_event || null,
+          events: status?.events ?? [],
+        };
+      }),
       items: order.line_items.map((item) => ({
         name: item.name,
         quantity: item.quantity,
