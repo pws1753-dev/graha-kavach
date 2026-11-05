@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { wooRequest } from "@/lib/woocommerce/client";
+import { getSessionCustomer } from "@/lib/auth/session";
+import { getAccountPhone, lastTenDigits, orderBelongsTo } from "@/lib/woocommerce/customer-orders";
 
 const trackRequestSchema = z.object({
   orderNumber: z.string().trim().min(1, "Order number is required"),
-  email: z.string().trim().email("Enter a valid email address"),
+  // The billing email or the mobile number used when ordering. Empty is fine
+  // for a logged-in customer looking at their own order.
+  email: z.string().trim().default(""),
 });
 
 type ASTTrackingItem = {
@@ -21,8 +25,10 @@ type RawOrder = {
   number: string;
   status: string;
   date_created: string;
+  customer_id?: number;
   billing: {
     email: string;
+    phone?: string;
   };
   line_items: {
     name: string;
@@ -148,15 +154,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     }
 
-    // Constant-time email comparison
-    const targetEmail = Buffer.from(email.toLowerCase().trim());
-    const orderEmail = Buffer.from((order.billing.email || "").toLowerCase().trim());
+    // A logged-in customer may see their own orders, including guest orders made
+    // with the same email or phone, without typing anything.
+    const session = await getSessionCustomer();
+    let allowed = false;
+    if (session) {
+      const phone = await getAccountPhone(session.customerId);
+      allowed = orderBelongsTo(order, { customerId: session.customerId, email: session.email, phone });
+    }
 
-    if (
-      targetEmail.length !== orderEmail.length ||
-      !timingSafeEqual(targetEmail, orderEmail)
-    ) {
-      // Uniform 404 response to prevent email harvesting
+    // Everyone else proves it is their order with the billing email or mobile number.
+    if (!allowed && email) {
+      const contact = email.toLowerCase().trim();
+      if (contact.includes("@")) {
+        // Constant-time email comparison
+        const targetEmail = Buffer.from(contact);
+        const orderEmail = Buffer.from((order.billing.email || "").toLowerCase().trim());
+        allowed = targetEmail.length === orderEmail.length && timingSafeEqual(targetEmail, orderEmail);
+      } else {
+        const digits = lastTenDigits(contact);
+        allowed = digits.length === 10 && digits === lastTenDigits(order.billing.phone);
+      }
+    }
+
+    if (!allowed) {
+      // Uniform 404 response to prevent enumeration
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     }
 

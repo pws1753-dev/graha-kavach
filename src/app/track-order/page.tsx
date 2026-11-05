@@ -34,7 +34,7 @@ type LoggedInOrder = {
   dateCreated: string;
   status: string;
   billing: { email?: string };
-  shipments: TrackingShipment[];
+  shipments: { trackingProvider: string }[];
 };
 
 export default function TrackOrderPage() {
@@ -49,23 +49,10 @@ export default function TrackOrderPage() {
   // Logged-in customer orders for quick tracking
   const [customerOrders, setCustomerOrders] = useState<LoggedInOrder[]>([]);
 
-  useEffect(() => {
-    if (customer) {
-      // Prefilling the email and flagging the load both happen once the
-      // request is under way, so nothing is set while the effect body runs.
-      fetch("/api/account/orders")
-        .then((res) => res.json())
-        .then((data) => {
-          setEmail(customer.email || "");
-          if (data.orders) setCustomerOrders(data.orders);
-        })
-        .catch(() => {});
-    }
-  }, [customer]);
-
   const handleTrack = async (targetOrderNumber: string, targetEmail: string) => {
-    if (!targetOrderNumber.trim() || !targetEmail.trim()) {
-      setError("Please enter both Order ID and Billing Email.");
+    // A logged-in customer's own orders need no email or phone.
+    if (!targetOrderNumber.trim() || (!customer && !targetEmail.trim())) {
+      setError("Please enter both Order ID and your Email or Mobile number.");
       return;
     }
 
@@ -88,7 +75,7 @@ export default function TrackOrderPage() {
       }
 
       if (!res.ok) {
-        throw new Error("No order found matching this order number and billing email combination.");
+        throw new Error("No order found matching this order number and email or mobile number.");
       }
 
       const data: TrackingResult = await res.json();
@@ -99,6 +86,28 @@ export default function TrackOrderPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (customer) {
+      // Prefilling the email and flagging the load both happen once the
+      // request is under way, so nothing is set while the effect body runs.
+      fetch("/api/account/orders")
+        .then((res) => res.json())
+        .then((data) => {
+          setEmail(customer.email || "");
+          if (data.orders) {
+            setCustomerOrders(data.orders);
+            // Show the latest order straight away; nothing to fill in.
+            if (data.orders[0]) {
+              setOrderNumber(data.orders[0].number);
+              handleTrack(data.orders[0].number, "");
+            }
+          }
+        })
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,7 +159,7 @@ export default function TrackOrderPage() {
               Your Active Orders ({customerOrders.length})
             </h2>
             <div className="mt-3 divide-y divide-border">
-              {customerOrders.slice(0, 3).map((order) => (
+              {customerOrders.slice(0, 5).map((order) => (
                 <div
                   key={order.id}
                   className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
@@ -164,7 +173,7 @@ export default function TrackOrderPage() {
                     </span>
                     {order.shipments && order.shipments.length > 0 ? (
                       <span className="ml-2 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                        {order.shipments[0].carrier}
+                        {order.shipments[0].trackingProvider}
                       </span>
                     ) : null}
                   </div>
@@ -173,8 +182,7 @@ export default function TrackOrderPage() {
                     type="button"
                     onClick={() => {
                       setOrderNumber(order.number);
-                      setEmail(customer.email || "");
-                      handleTrack(order.number, customer.email || "");
+                      handleTrack(order.number, "");
                     }}
                     className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-semibold text-stone-800 transition-colors hover:bg-stone-200"
                   >
@@ -192,7 +200,7 @@ export default function TrackOrderPage() {
             Order Verification
           </h2>
           <p className="text-xs text-muted-foreground">
-            Enter your order number and the billing email address provided during checkout.
+            Enter your order number and the email address or mobile number you gave while ordering.
           </p>
 
           {error ? (
@@ -222,17 +230,17 @@ export default function TrackOrderPage() {
               )}
             </Field>
 
-            <Field id="email" label="Billing Email" required>
+            <Field id="email" label="Email or Mobile Number" required={!customer}>
               {({ id, "aria-describedby": describedBy }) => (
                 <Input
                   id={id}
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. name@example.com"
+                  placeholder="name@example.com or 98XXXXXXXX"
                   disabled={loading}
                   aria-describedby={describedBy}
-                  required
+                  required={!customer}
                 />
               )}
             </Field>
@@ -240,7 +248,7 @@ export default function TrackOrderPage() {
             <div className="flex items-end">
               <button
                 type="submit"
-                disabled={loading || !orderNumber.trim() || !email.trim()}
+                disabled={loading || !orderNumber.trim() || (!customer && !email.trim())}
                 className="flex h-[44px] w-full items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-stone-300 sm:w-auto"
               >
                 {loading ? "Verifying..." : "Track"}

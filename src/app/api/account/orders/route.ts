@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionCustomer } from "@/lib/auth/session";
 import { wooRequest } from "@/lib/woocommerce/client";
+import { listAccountOrders } from "@/lib/woocommerce/customer-orders";
 
 type ASTTrackingItem = {
   tracking_id: string;
@@ -17,6 +18,7 @@ type RawOrder = {
   status: string;
   currency: string;
   date_created: string;
+  customer_id?: number;
   total: string;
   line_items: {
     id: number;
@@ -37,12 +39,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch customer's orders from WooCommerce
-    const orders = await wooRequest<RawOrder[]>({
-      path: "/orders",
-      query: { customer: session.customerId, per_page: 20 },
-      revalidate: false,
-    });
+    // Orders placed while logged in, plus guest orders with the same email or phone
+    const orders = await listAccountOrders<RawOrder>(session);
 
     // Fetch tracking for each order
     const enrichedOrders = await Promise.all(
