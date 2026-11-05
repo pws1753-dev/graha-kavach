@@ -38,7 +38,7 @@ type LoggedInOrder = {
 };
 
 export default function TrackOrderPage() {
-  const { customer } = useCustomer();
+  const { customer, isLoading: authLoading } = useCustomer();
 
   const [orderNumber, setOrderNumber] = useState("");
   const [email, setEmail] = useState("");
@@ -48,6 +48,7 @@ export default function TrackOrderPage() {
 
   // Logged-in customer orders for quick tracking
   const [customerOrders, setCustomerOrders] = useState<LoggedInOrder[]>([]);
+  const [ordersLoaded, setOrdersLoaded] = useState(false);
 
   const handleTrack = async (targetOrderNumber: string, targetEmail: string) => {
     // A logged-in customer's own orders need no email or phone.
@@ -94,7 +95,10 @@ export default function TrackOrderPage() {
       fetch("/api/account/orders")
         .then((res) => res.json())
         .then((data) => {
-          setEmail(customer.email || "");
+          // A phone-login account has a placeholder email; the phone is what identifies it.
+          const realEmail = customer.email && !customer.email.endsWith("@phone.grahakavach.in") ? customer.email : "";
+          setEmail(customer.billing?.phone || realEmail);
+          setOrdersLoaded(true);
           if (data.orders) {
             setCustomerOrders(data.orders);
             // Show the latest order straight away; nothing to fill in.
@@ -104,7 +108,7 @@ export default function TrackOrderPage() {
             }
           }
         })
-        .catch(() => {});
+        .catch(() => setOrdersLoaded(true));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer]);
@@ -152,6 +156,18 @@ export default function TrackOrderPage() {
           </p>
         </div>
 
+        {authLoading ? (
+          <div className="mt-8 rounded-2xl border border-border bg-white p-6 text-center text-sm text-muted-foreground shadow-xs">
+            Checking your account...
+          </div>
+        ) : null}
+
+        {customer && ordersLoaded && customerOrders.length === 0 ? (
+          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+            No orders are linked to this account yet. Enter your order number below; your mobile number is already filled in.
+          </div>
+        ) : null}
+
         {/* Quick select for Logged In Customers */}
         {customer && customerOrders.length > 0 ? (
           <div className="mt-8 rounded-2xl border border-border bg-white p-6 shadow-xs">
@@ -195,7 +211,7 @@ export default function TrackOrderPage() {
         ) : null}
 
         {/* Lookup Form */}
-        <div className="mt-8 rounded-2xl border border-border bg-white p-6 shadow-xs sm:p-8">
+        <div className={`mt-8 rounded-2xl border border-border bg-white p-6 shadow-xs sm:p-8 ${authLoading ? "hidden" : ""}`}>
           <h2 className="text-lg font-medium text-foreground">
             Order Verification
           </h2>
