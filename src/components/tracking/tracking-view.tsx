@@ -2,28 +2,11 @@
 
 import { useState } from "react";
 
-export type TrackingShipment = {
-  carrier: string;
-  trackingNumber: string;
-  trackingUrl: string;
-  shippedOn: string | null;
-  status: string | null;
-  statusLabel: string | null;
-  estimatedDelivery: string | null;
-  lastEvent: string | null;
-  events: { message: string; location: string; time: string }[];
-};
+import type { OrderPayment, TrackingData, TrackingShipment } from "@/lib/tracking/types";
 
-export type TrackingData = {
-  orderNumber: string;
-  placedOn: string;
-  state: "awaiting_payment" | "confirming" | "preparing" | "shipped" | "completed" | "cancelled" | "refunded";
-  isShipped: boolean;
-  shipments: TrackingShipment[];
-  items: { name: string; quantity: number }[];
-};
+export type { OrderPayment, TrackingData, TrackingShipment };
 
-const STEPS = ["Order confirmed", "Shipped", "Out for delivery", "Delivered"];
+export const TRACKING_STEPS = ["Order confirmed", "Shipped", "Out for delivery", "Delivered"];
 
 /** How far along a parcel is: 0 confirmed, 1 shipped, 2 out for delivery, 3 delivered. */
 function stageOf(shipment: TrackingShipment | undefined, data: TrackingData): number {
@@ -67,6 +50,13 @@ function headline(shipment: TrackingShipment | undefined, data: TrackingData, st
   return { text: "Packing your order", sub: "It will be shipped soon", tone: "good" };
 }
 
+/** Stage and headline for the order cards on My Orders (first parcel). */
+export function summarizeTracking(data: TrackingData): { stage: number; text: string; sub: string; tone: "good" | "warn" | "bad" } {
+  const shipment = data.shipments[0];
+  const stage = stageOf(shipment, data);
+  return { stage, ...headline(shipment, data, stage) };
+}
+
 const toneClass = { good: "text-emerald-700", warn: "text-amber-700", bad: "text-red-700" } as const;
 
 function Check() {
@@ -93,6 +83,8 @@ export function TrackingView({ data }: { data: TrackingData }) {
       {shipments.map((shipment, index) => (
         <ShipmentCard key={shipment?.trackingNumber ?? index} shipment={shipment} data={data} multiple={shipments.length > 1} number={index + 1} />
       ))}
+
+      {data.payment ? <PaymentCard payment={data.payment} /> : null}
 
       <div className="rounded-2xl border border-border bg-white p-5 shadow-xs">
         <h3 className="text-sm font-semibold text-foreground">In this order</h3>
@@ -145,7 +137,7 @@ function ShipmentCard({ shipment, data, multiple, number }: { shipment: Tracking
         <ol className="relative flex justify-between">
           <div className="absolute top-3 right-8 left-8 h-1 rounded bg-stone-200" />
           <div className="absolute top-3 left-8 h-1 rounded bg-emerald-600 transition-all duration-500" style={{ width: `calc((100% - 4rem) * ${stage / 3})` }} />
-          {STEPS.map((label, i) => {
+          {TRACKING_STEPS.map((label, i) => {
             const done = i <= stage;
             return (
               <li key={label} className="relative z-10 flex w-16 flex-col items-center text-center">
@@ -234,6 +226,80 @@ function ShipmentCard({ shipment, data, multiple, number }: { shipment: Tracking
           Your order is being prepared. The courier and tracking number will appear here once it is handed over.
         </p>
       )}
+    </div>
+  );
+}
+
+const inr = (value: number) =>
+  `₹${value.toLocaleString("en-IN", { minimumFractionDigits: Number.isInteger(value) ? 0 : 2, maximumFractionDigits: 2 })}`;
+
+const paymentTone: Record<OrderPayment["kind"], string> = {
+  online: "bg-emerald-100 text-emerald-800",
+  paid: "bg-emerald-100 text-emerald-800",
+  part: "bg-amber-100 text-amber-900",
+  cod: "bg-stone-100 text-stone-800",
+  awaiting: "bg-red-100 text-red-800",
+};
+
+/** Small coloured label: "Part paid", "Paid online", "Pay on delivery"... */
+export function PaymentBadge({ payment }: { payment: OrderPayment }) {
+  return (
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${paymentTone[payment.kind]}`}>{payment.label}</span>
+  );
+}
+
+/** One line under an order card: what has been paid and what is still due. */
+export function paymentSentence(payment: OrderPayment): string {
+  switch (payment.kind) {
+    case "part":
+      return `${inr(payment.paid)} paid online · ${inr(payment.due)} to pay on delivery`;
+    case "paid":
+      return `${inr(payment.total)} paid, advance online and balance on delivery`;
+    case "online":
+      return `${inr(payment.total)} paid online`;
+    case "cod":
+      return `${inr(payment.total)} to pay on delivery`;
+    default:
+      return `${inr(payment.total)} awaiting payment`;
+  }
+}
+
+/** What has been paid and what is left, so a part-paid order is never mistaken for a fully paid one. */
+function PaymentCard({ payment }: { payment: OrderPayment }) {
+  return (
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-foreground">Payment</h3>
+        <PaymentBadge payment={payment} />
+      </div>
+      <dl className="mt-3 space-y-1.5 text-sm">
+        <div className="flex justify-between gap-3">
+          <dt className="text-stone-600">Order total</dt>
+          <dd className="font-semibold text-foreground">{inr(payment.total)}</dd>
+        </div>
+        {payment.paid > 0 && payment.kind !== "paid" && payment.kind !== "online" ? (
+          <div className="flex justify-between gap-3">
+            <dt className="text-stone-600">Paid online</dt>
+            <dd className="font-semibold text-emerald-700">- {inr(payment.paid)}</dd>
+          </div>
+        ) : null}
+        {payment.due > 0 ? (
+          <div className="flex justify-between gap-3 border-t border-border pt-2">
+            <dt className="font-semibold text-foreground">{payment.kind === "awaiting" ? "Amount due" : "Pay on delivery"}</dt>
+            <dd className="text-base font-bold text-foreground">{inr(payment.due)}</dd>
+          </div>
+        ) : (
+          <div className="flex justify-between gap-3 border-t border-border pt-2">
+            <dt className="font-semibold text-foreground">Balance</dt>
+            <dd className="font-bold text-emerald-700">{inr(0)}</dd>
+          </div>
+        )}
+      </dl>
+      {payment.kind === "part" ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          You paid an advance online. Please pay the balance in cash or UPI to the delivery person.
+        </p>
+      ) : null}
     </div>
   );
 }

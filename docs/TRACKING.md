@@ -284,3 +284,88 @@ A dummy order was created and fully exercised, then removed.
 
 `test@example.com` is an IANA-reserved domain that cannot receive mail, so no
 real person could have been emailed at any point.
+
+---
+
+## 9. Live status today (Nov 2026): how the whole chain works
+
+Sections 1 to 8 describe the first AST-only setup. Since then **TrackShip for
+WooCommerce** has been added (connected 2026-11-05, Free Trial plan, 100 trackers),
+and the storefront shows live courier status.
+
+```
+Sales team ──► order > "Shipment Tracking" box (AST): courier + tracking number
+                 └─ order marked Shipped (Woo status "completed")
+                      └─ TrackShip receives the parcel and follows it with the courier
+                           └─ status and scan history are stored in wp_trackship_shipment(_meta)
+Headless Core ──► GET /wc/v3/orders/{id}/shipment-status   (reads those tables)
+Next.js  ──► /api/track (guest + login) and /api/account/orders (login)
+                 └─ one shared builder: src/lib/woocommerce/order-tracking.ts
+```
+
+### What the sales team does (the only manual step)
+
+1. Open the order in WooCommerce > Orders.
+2. In **Shipment Tracking** pick the courier, type the tracking number, tick
+   **Mark order as Shipped**, save.
+
+Nothing else. TrackShip then updates the status by itself and the customer's page
+shows it. A parcel that TrackShip reports as delivered sets the order to
+**Delivered**.
+
+### Parcels shipped before TrackShip was connected
+
+TrackShip only picks up orders when they are marked Shipped *after* it is
+connected. Orders shipped earlier (383, 384, 395, 396, 397, 399 on 2026-11-05)
+have a tracking number but no live status. To start tracking them without emailing
+the customer again:
+
+WooCommerce > Orders > tick those orders > Bulk actions > **Get Shipment Status** > Apply.
+
+### What each customer screen shows
+
+| Screen | Who | What |
+| --- | --- | --- |
+| `/track-order` | guest (order number + email or mobile) or login | headline, 4-step progress, courier scans, payment |
+| `/account/orders` | login | every order (including guest orders with the same email or mobile): headline, progress, latest scan, payment |
+| `/account/orders/<id>` | login | the same full tracking screen as `/track-order` |
+
+Logged-in pages refresh by themselves every 5 minutes and when the tab is opened
+again. The data is read fresh from WordPress on every request (never cached).
+
+### Payment shown to the customer
+
+| Order | Label | Detail |
+| --- | --- | --- |
+| COD with an advance, not yet delivered | **Part paid** | advance paid online, balance due on delivery |
+| COD with an advance, Delivered | **Paid in full** | balance collected |
+| COD without an advance | **Pay on delivery** | total due |
+| Online (Razorpay) | **Paid online** | nothing due |
+| Pending or failed | **Payment pending** | |
+
+The advance is read from the order (`_cod_advance_paid`, written when Razorpay
+confirms). "Shipped" (`completed`) does not count as the balance being paid;
+only Delivered does. WordPress shows the same in WooCommerce > Orders, in the
+**Payment** column added by the Graha Kavach Part Payment & Invoice plugin.
+
+### Production environment variables (Hostinger)
+
+These are read at runtime, so the site must have them in Hostinger > Websites >
+grahakavach.in > Environment variables. After the Git source was switched on
+2026-11-05 the builds reported `no .env file`; if the variables are not listed
+there, the advance and online payment are off. The server logs a `[env]` line at
+start-up naming any that are missing (`src/instrumentation.ts`).
+
+`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RESEND_API_KEY`, `RESEND_FROM`,
+`CONTACT_NOTIFY_EMAIL`, `META_CONVERSIONS_API_ACCESS_TOKEN`,
+`NEXT_PUBLIC_META_PIXEL_ID`, `REVALIDATION_SECRET`, `WC_CONSUMER_KEY`,
+`WC_CONSUMER_SECRET`, `NEXT_PUBLIC_SITE_URL`, `WORDPRESS_URL`,
+`WORDPRESS_GRAPHQL_URL`, `WOOCOMMERCE_URL` and the `NEXT_PUBLIC_FIREBASE_*` set.
+
+### Cost note
+
+TrackShip's Free Trial covers 100 shipments; after that it is a paid plan. The
+repository also contains `wordpress-plugins/grahakavach-tracking`, which reads
+Delhivery and Xpressbees directly and needs no subscription, only the couriers'
+API credentials. It is not installed. Install it only after removing the
+duplicate tracking box (do not run it next to AST).

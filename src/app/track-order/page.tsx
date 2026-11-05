@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useCustomer } from "@/lib/auth/use-customer";
 import { Field, Input } from "@/components/ui/form";
-import { TrackingView, type TrackingData } from "@/components/tracking/tracking-view";
+import { PaymentBadge, TrackingView, summarizeTracking, type TrackingData } from "@/components/tracking/tracking-view";
+import { useAutoRefresh } from "@/lib/hooks/use-auto-refresh";
 
 type TrackingResult = TrackingData;
 
@@ -15,6 +16,7 @@ type LoggedInOrder = {
   status: string;
   billing: { email?: string };
   shipments: { trackingProvider: string }[];
+  tracking: TrackingData;
 };
 
 export default function TrackOrderPage() {
@@ -30,6 +32,9 @@ export default function TrackOrderPage() {
   const [customerOrders, setCustomerOrders] = useState<LoggedInOrder[]>([]);
   const [ordersLoaded, setOrdersLoaded] = useState(false);
 
+  // The order on screen, so it can be refreshed in the background without asking again.
+  const lastQuery = useRef<{ orderNumber: string; email: string } | null>(null);
+
   const handleTrack = async (targetOrderNumber: string, targetEmail: string) => {
     // A logged-in customer's own orders need no email or phone.
     if (!targetOrderNumber.trim() || (!customer && !targetEmail.trim())) {
@@ -37,6 +42,7 @@ export default function TrackOrderPage() {
       return;
     }
 
+    lastQuery.current = { orderNumber: targetOrderNumber.trim(), email: targetEmail.trim() };
     setLoading(true);
     setError(null);
     setResult(null);
@@ -67,6 +73,22 @@ export default function TrackOrderPage() {
       setLoading(false);
     }
   };
+
+  // Pick up courier updates while the page stays open, without clearing what is on screen.
+  useAutoRefresh(() => {
+    const query = lastQuery.current;
+    if (!query) return;
+    void fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(query),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: TrackingResult | null) => {
+        if (data) setResult(data);
+      })
+      .catch(() => {});
+  }, Boolean(result));
 
   useEffect(() => {
     if (customer) {
@@ -148,9 +170,14 @@ export default function TrackOrderPage() {
                     <span className="font-mono font-bold text-foreground">
                       Order #{order.number}
                     </span>
-                    <span className="ml-3 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium uppercase text-stone-700">
-                      {order.status}
+                    <span className="ml-3 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-medium text-stone-700">
+                      {summarizeTracking(order.tracking).text}
                     </span>
+                    {order.tracking.payment ? (
+                      <span className="ml-2 inline-block align-middle">
+                        <PaymentBadge payment={order.tracking.payment} />
+                      </span>
+                    ) : null}
                     {order.shipments && order.shipments.length > 0 ? (
                       <span className="ml-2 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
                         {order.shipments[0].trackingProvider}
