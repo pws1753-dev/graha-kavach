@@ -80,6 +80,15 @@ final class GK_Shipment_Status {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function for_order( int $order_id ): array {
+		// The Graha Kavach Shipment Tracking plugin answers first when it is active.
+		$rows = apply_filters( 'gk_shipment_status_rows', self::from_trackship( $order_id ), $order_id );
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function from_trackship( int $order_id ): array {
 		global $wpdb;
 
 		$shipments = $wpdb->prefix . 'trackship_shipment';
