@@ -9,8 +9,8 @@ Automated WhatsApp Cloud API alerts for the WooCommerce backend (`admin.grahakav
 | Payment successful | `gk_payment_success` | Online order paid |
 | COD confirmed | `gk_cod_advance_received` | COD order, online advance paid |
 | Order being processed | `gk_order_processing` | 5 min after payment (setting) |
-| Shipped + tracking | `gk_order_shipped` | Tracking number added (Advanced Shipment Tracking) |
-| Delivered | `gk_order_delivered` | Status -> Completed |
+| Shipped + tracking | `gk_order_shipped` | Status -> Shipped or Partially Shipped, or a tracking number added (Advanced Shipment Tracking) |
+| Delivered | `gk_order_delivered` | Status -> Delivered only |
 | Cancelled / Refunded / Payment failed | `gk_order_cancelled`, `gk_order_refunded`, `gk_payment_failed` | Matching WooCommerce events |
 | New order alert to the owner | `gk_admin_new_order` | Confirmed order |
 
@@ -50,7 +50,8 @@ Templates stay PENDING until Meta approves them (a few minutes to 24 hours); mes
 
 - **Reliable timing**: the cart reminders use WP-Cron every 10 minutes. On low-traffic sites add a real cron: `*/10 * * * * curl -s https://admin.grahakavach.in/wp-cron.php?doing_wp_cron >/dev/null`.
 - **Tracking**: the shipped message reads the `_wc_shipment_tracking_items` meta that Advanced Shipment Tracking writes (the same data `/api/track` uses).
-- **Delivered message**: it fires on status `Completed`. If Advanced Shipment Tracking is set to auto-complete orders when shipped, turn the delivered message off in Settings.
+- **Shipped vs Delivered**: on this shop the status labelled **Shipped** is WooCommerce's `completed` status renamed by Advanced Shipment Tracking, so `completed` never sends the delivered message. Only the real **Delivered** status does.
+- **Status to template map**: Pending: none. Processing: `gk_cod_advance_received` or `gk_payment_success`, then `gk_order_processing`, plus the owner alert. Shipped / Partially Shipped: `gk_order_shipped` (courier and tracking number). Delivered: `gk_order_delivered`. Cancelled (from Processing or On hold): `gk_order_cancelled`. Refunded: `gk_order_refunded`. Failed: `gk_payment_failed`. A template must be Approved on Meta under the same language as Settings (en_US) or the send fails with error 132001.
 - **Consent**: cart reminders are MARKETING. Add a line to the privacy policy and checkout saying order updates and reminders are sent on WhatsApp, and keep the STOP handling on.
 - **Phone numbers** are normalised to `91XXXXXXXXXX`. Orders without a valid mobile are logged as `skipped`, never an error.
 

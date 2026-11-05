@@ -3,7 +3,7 @@
  * Plugin Name:       Graha Kavach WhatsApp Alerts
  * Plugin URI:        https://grahakavach.in
  * Description:       Automated WhatsApp Cloud API messages for WooCommerce: signup thank-you, abandoned-cart recovery, payment confirmation, order processing, shipping, delivery, cancellation and refunds. Built for the headless Graha Kavach storefront.
- * Version:           1.1.0
+ * Version:           1.1.1
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Requires Plugins:  woocommerce
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GKWA_VERSION', '1.1.0' );
+define( 'GKWA_VERSION', '1.1.1' );
 define( 'GKWA_FILE', __FILE__ );
 define( 'GKWA_DIR', plugin_dir_path( __FILE__ ) );
 

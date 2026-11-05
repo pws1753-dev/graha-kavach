@@ -29,6 +29,9 @@ final class GKWA_Events {
 
 		add_action( 'woocommerce_order_status_processing', array( __CLASS__, 'on_paid' ), 20, 1 );
 		add_action( 'woocommerce_order_status_completed', array( __CLASS__, 'on_completed' ), 20, 1 );
+		add_action( 'woocommerce_order_status_partial-shipped', array( __CLASS__, 'on_shipped' ), 20, 1 );
+		add_action( 'woocommerce_order_status_delivered', array( __CLASS__, 'on_delivered' ), 20, 1 );
+		add_action( 'admin_init', array( __CLASS__, 'reset_wrong_delivered' ) );
 		add_action( 'woocommerce_order_status_failed', array( __CLASS__, 'on_failed' ), 20, 1 );
 		add_action( 'woocommerce_order_status_changed', array( __CLASS__, 'on_status_changed' ), 20, 3 );
 		add_action( 'woocommerce_order_refunded', array( __CLASS__, 'on_refunded' ), 20, 2 );
@@ -177,11 +180,25 @@ final class GKWA_Events {
 		self::at_shutdown( array( __CLASS__, 'job_paid' ), (int) $order_id );
 	}
 
+	/**
+	 * On this shop "Shipped" is WooCommerce's `completed` status under a new name
+	 * (the shipment-tracking plugin renames it), so completed means the parcel has
+	 * left, not that it arrived. The delivered message belongs to the Delivered status.
+	 */
 	public static function on_completed( $order_id ): void {
-		// An order marked Completed straight from Pending/On hold was never "paid"
+		// An order marked Shipped straight from Pending/On hold was never "paid"
 		// through the processing hook (e.g. manual COD), so confirm it as well.
 		self::at_shutdown( array( __CLASS__, 'job_paid' ), (int) $order_id );
+		self::on_shipped( $order_id );
+	}
 
+	/** Shipped / Partially Shipped: send the shipped message with courier and tracking number. */
+	public static function on_shipped( $order_id ): void {
+		self::at_shutdown( array( __CLASS__, 'job_shipment' ), (int) $order_id );
+	}
+
+	/** Delivered: the only status that sends the delivered message. */
+	public static function on_delivered( $order_id ): void {
 		$order = wc_get_order( (int) $order_id );
 		if ( $order && self::claim( $order, 'delivered' ) ) {
 			GKWA_Sender::queue(
@@ -193,6 +210,35 @@ final class GKWA_Events {
 				),
 				self::ctx( $order )
 			);
+		}
+	}
+
+	/**
+	 * Earlier versions sent "delivered" when an order was marked Shipped and
+	 * recorded it as done, which would block the real message later. Clear that
+	 * flag on orders that have not reached Delivered. Runs once.
+	 */
+	public static function reset_wrong_delivered(): void {
+		if ( get_option( 'gkwa_delivered_reset_v1' ) || ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+		update_option( 'gkwa_delivered_reset_v1', 1 );
+
+		$orders = wc_get_orders(
+			array(
+				'limit'      => 500,
+				'status'     => array( 'completed', 'processing', 'partial-shipped' ),
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					array(
+						'key'     => '_gkwa_q_delivered',
+						'compare' => 'EXISTS',
+					),
+				),
+			)
+		);
+		foreach ( $orders as $order ) {
+			$order->delete_meta_data( '_gkwa_q_delivered' );
+			$order->save_meta_data();
 		}
 	}
 

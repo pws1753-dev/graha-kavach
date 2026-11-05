@@ -3,7 +3,7 @@
  * Plugin Name:       Graha Kavach Part Payment & Invoice
  * Plugin URI:        https://grahakavach.in
  * Description:       Shows Cash on Delivery orders that took an online advance as part-paid: "Paid online" and "Balance due on delivery" in wp-admin, emails, the thank-you page and the PDF invoice (PDF Invoices & Packing Slips by WP Overnight).
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Graha Kavach
@@ -43,13 +43,23 @@ final class GK_Part_Payment {
 		return max( 0.0, min( $advance, (float) $order->get_total() ) );
 	}
 
+	/**
+	 * The COD balance counts as collected only once the order is Delivered.
+	 * On this shop "Shipped" is WooCommerce's `completed` status renamed by the
+	 * shipment-tracking plugin, so `completed` only means the parcel has left,
+	 * not that anyone paid the courier.
+	 */
+	public static function delivered( $order ): bool {
+		return $order instanceof WC_Order && 'delivered' === $order->get_status();
+	}
+
 	/** Balance still to be collected on delivery, in rupees. */
 	public static function balance( $order ): float {
 		$advance = self::advance( $order );
 		if ( $advance <= 0 ) {
 			return 0.0;
 		}
-		if ( 'completed' === $order->get_status() ) {
+		if ( self::delivered( $order ) ) {
 			return 0.0; // Delivered: the balance was collected.
 		}
 		return max( 0.0, (float) $order->get_total() - $advance - (float) $order->get_total_refunded() );
@@ -61,7 +71,7 @@ final class GK_Part_Payment {
 			return '';
 		}
 		if ( self::advance( $order ) > 0 ) {
-			return 'completed' === $order->get_status() ? 'paid' : 'part';
+			return self::delivered( $order ) ? 'paid' : 'part';
 		}
 		return 'cod' === $order->get_payment_method() ? 'cod' : '';
 	}
@@ -78,10 +88,74 @@ final class GK_Part_Payment {
 		add_filter( 'manage_edit-shop_order_columns', array( __CLASS__, 'column' ) );
 		add_action( 'manage_shop_order_posts_custom_column', array( __CLASS__, 'column_content_legacy' ), 10, 2 );
 
+		// WooCommerce stamps "Paid on" when an order is first shipped (completed). For a
+		// COD order the real date is when the advance came in, so keep that one.
+		add_action( 'woocommerce_order_status_processing', array( __CLASS__, 'remember_advance_time' ), 5 );
+		add_action( 'woocommerce_order_status_completed', array( __CLASS__, 'restore_advance_time' ), 99 );
+		add_action( 'admin_init', array( __CLASS__, 'repair_shipped_orders' ) );
+
 		// PDF Invoices & Packing Slips (WP Overnight).
 		add_action( 'wpo_wcpdf_after_order_details', array( __CLASS__, 'invoice_summary' ), 10, 2 );
 		add_filter( 'wpo_wcpdf_custom_styles', array( __CLASS__, 'invoice_styles' ), 10, 2 );
 		add_action( 'admin_init', array( __CLASS__, 'configure_invoice_plugin' ) );
+	}
+
+	/** Remember when the advance arrived (the first time the order reaches Processing with one). */
+	public static function remember_advance_time( $order_id ): void {
+		$order = wc_get_order( (int) $order_id );
+		if ( ! $order || self::advance( $order ) <= 0 || $order->get_meta( '_gk_advance_paid_at' ) ) {
+			return;
+		}
+		$order->update_meta_data( '_gk_advance_paid_at', time() );
+		$order->save_meta_data();
+	}
+
+	/** Put "Paid on" back to the advance time after WooCommerce moved it to the shipping time. */
+	public static function restore_advance_time( $order_id ): void {
+		$order = wc_get_order( (int) $order_id );
+		if ( ! $order || self::advance( $order ) <= 0 ) {
+			return;
+		}
+		$paid_at = (int) $order->get_meta( '_gk_advance_paid_at' );
+		$current = $order->get_date_paid( 'edit' );
+		if ( $paid_at > 0 && ( ! $current || (int) $current->getTimestamp() !== $paid_at ) ) {
+			$order->set_date_paid( $paid_at );
+			$order->save();
+		}
+	}
+
+	/**
+	 * One-time repair of orders already shipped: their "Paid on" date moved to the
+	 * day they were marked Shipped. Set it back to when the advance came in (the
+	 * WhatsApp advance message time, else the day the order was placed).
+	 */
+	public static function repair_shipped_orders(): void {
+		if ( get_option( 'gk_pp_shipped_repair_v1' ) || ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+		update_option( 'gk_pp_shipped_repair_v1', 1 );
+
+		$orders = wc_get_orders(
+			array(
+				'status'         => 'completed',
+				'limit'          => 200,
+				'payment_method' => 'cod',
+			)
+		);
+		foreach ( $orders as $order ) {
+			if ( self::advance( $order ) <= 0 ) {
+				continue;
+			}
+			$paid_at = (int) $order->get_meta( '_gkwa_q_payment' );
+			if ( $paid_at <= 0 && $order->get_date_created() ) {
+				$paid_at = (int) $order->get_date_created()->getTimestamp();
+			}
+			if ( $paid_at > 0 ) {
+				$order->update_meta_data( '_gk_advance_paid_at', $paid_at );
+				$order->set_date_paid( $paid_at );
+				$order->save();
+			}
+		}
 	}
 
 	/**
@@ -92,7 +166,7 @@ final class GK_Part_Payment {
 		if ( self::advance( $order ) <= 0 ) {
 			return $title;
 		}
-		return 'completed' === $order->get_status()
+		return self::delivered( $order )
 			? __( 'Advance online + balance paid on delivery', 'grahakavach-part-payment' )
 			: __( 'Part payment: advance paid online, balance on delivery (COD)', 'grahakavach-part-payment' );
 	}
@@ -110,7 +184,7 @@ final class GK_Part_Payment {
 			'value' => '- ' . wc_price( $advance, array( 'currency' => $order->get_currency() ) ),
 		);
 
-		$completed = 'completed' === $order->get_status();
+		$completed = self::delivered( $order );
 		$rows['gk_balance_due'] = array(
 			'label' => ( $completed
 				? __( 'Received on delivery (balance)', 'grahakavach-part-payment' )
@@ -127,7 +201,7 @@ final class GK_Part_Payment {
 		if ( $advance <= 0 ) {
 			return;
 		}
-		$completed = 'completed' === $order->get_status();
+		$completed = self::delivered( $order );
 		?>
 		<table class="wc-order-totals" style="border-top:1px solid #999;margin-top:12px;padding-top:12px">
 			<tr>
