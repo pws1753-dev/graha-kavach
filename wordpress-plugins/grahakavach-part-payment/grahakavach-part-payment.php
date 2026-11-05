@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Graha Kavach Part Payment & Invoice
  * Plugin URI:        https://grahakavach.in
- * Description:       Shows Cash on Delivery orders that took an online advance as part-paid: "Paid online" and "Balance due on delivery" in wp-admin, emails, the thank-you page and the PDF invoice (PDF Invoices & Packing Slips by WP Overnight).
- * Version:           1.1.0
+ *Description:       Shows Cash on Delivery orders that took an online advance as part-paid: "Paid online" and "Balance due on delivery" in wp-admin, emails, the thank-you page and the PDF invoice (PDF Invoices & Packing Slips by WP Overnight).
+ * Version:           1.1.1
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Graha Kavach
@@ -97,7 +97,6 @@ final class GK_Part_Payment {
 		// PDF Invoices & Packing Slips (WP Overnight).
 		add_action( 'wpo_wcpdf_after_order_details', array( __CLASS__, 'invoice_summary' ), 10, 2 );
 		add_filter( 'wpo_wcpdf_custom_styles', array( __CLASS__, 'invoice_styles' ), 10, 2 );
-		add_action( 'admin_init', array( __CLASS__, 'configure_invoice_plugin' ) );
 	}
 
 	/** Remember when the advance arrived (the first time the order reaches Processing with one). */
@@ -334,40 +333,6 @@ final class GK_Part_Payment {
 			.gk-pay-box strong { font-size: 10pt; }
 			tr.gk_advance_paid td, tr.gk_balance_due td { font-weight: bold; }
 		';
-	}
-
-	/**
-	 * One-time, non-destructive defaults for PDF Invoices & Packing Slips:
-	 * email the invoice with the order confirmation and the completed email.
-	 * Anything an admin already chose is left alone. Logo, shop address and
-	 * GSTIN are business details and are set in WooCommerce > PDF Invoices.
-	 */
-	public static function configure_invoice_plugin(): void {
-		if ( get_option( 'gk_pp_invoice_configured' ) || ! current_user_can( 'manage_woocommerce' ) ) {
-			return;
-		}
-		if ( ! function_exists( 'WPO_WCPDF' ) ) {
-			return;
-		}
-
-		$settings = get_option( 'wpo_wcpdf_documents_settings_invoice', array() );
-		$settings = is_array( $settings ) ? $settings : array();
-
-		if ( empty( $settings['attach_to_email_ids'] ) ) {
-			$settings['attach_to_email_ids'] = array(
-				'customer_processing_order' => 1,
-				'customer_completed_order'  => 1,
-			);
-		}
-		if ( ! isset( $settings['display_number'] ) ) {
-			$settings['display_number'] = 'invoice_number';
-		}
-		if ( ! isset( $settings['display_date'] ) ) {
-			$settings['display_date'] = 'invoice_date';
-		}
-
-		update_option( 'wpo_wcpdf_documents_settings_invoice', $settings );
-		update_option( 'gk_pp_invoice_configured', 1 );
 	}
 }
 
