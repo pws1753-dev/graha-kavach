@@ -234,7 +234,7 @@ export const LANDING_QUERY = `
   query Landing($slug: String) {
     grahaKavachLanding(slug: $slug) {
       pageId productSlug hideTimer
-      topbarText endTime endsAt timerLabel timerUnits stickyLabel lockLabel
+      topbarText endTime endsAt cycleDays timerLabel timerUnits stickyLabel lockLabel
       headerTagline ctaShort ctaLabel ctaSticky ctaOffer
       heroBadge heroTitleBefore heroTitleHighlight heroTitleAfter heroText
       heroImage { ${mediaFields} }

@@ -204,6 +204,7 @@ final class GK_Noindex {
 			'# APIs remain reachable; they are simply not for indexing.',
 			'Allow: /wp-json/',
 			'Allow: /graphql',
+			'Allow: /wp-content/uploads/',
 			'',
 		);
 

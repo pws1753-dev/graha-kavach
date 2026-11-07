@@ -1,49 +1,44 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/config/site";
-import { getCmsPages, getLandingSlugs, getPosts } from "@/lib/wordpress/adapters";
+import { getCmsPages, getPosts } from "@/lib/wordpress/adapters";
 
+/**
+ * Every URL that should be indexed, built from WordPress on each request cycle,
+ * so a newly published post or policy page appears without a deploy.
+ *
+ * `changeFrequency` and `priority` are left out on purpose: Google ignores both.
+ * `lastModified` is only given where a real date exists; a date of "now" on every
+ * URL teaches crawlers to ignore the field.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.frontendUrl.replace(/\/$/, "");
 
-  const [posts, cmsPages, landingSlugs] = await Promise.all([getPosts(100), getCmsPages(), getLandingSlugs()]);
+  const [posts, cmsPages] = await Promise.all([getPosts(100), getCmsPages()]);
 
-  /*
-   * No `lastModified` on pages that have no real modification date. A date of
-   * "now" on every URL teaches crawlers to ignore the field.
-   */
+  // /book-now and /lp/* are campaign pages (noindex), so they are not listed.
   const staticPages: MetadataRoute.Sitemap = [
-    { url: baseUrl, changeFrequency: "daily", priority: 1.0 },
-    { url: `${baseUrl}/fire-safety-kit`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${baseUrl}/book-now`, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${baseUrl}/how-it-works`, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${baseUrl}/safety-guide`, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${baseUrl}/blog`, changeFrequency: "daily", priority: 0.8 },
-    { url: `${baseUrl}/become-a-dealer`, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${baseUrl}/about`, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${baseUrl}/contact`, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${baseUrl}/privacy-policy`, changeFrequency: "yearly", priority: 0.4 },
+    { url: baseUrl },
+    { url: `${baseUrl}/fire-safety-kit` },
+    { url: `${baseUrl}/how-it-works` },
+    { url: `${baseUrl}/safety-guide` },
+    { url: `${baseUrl}/blog` },
+    { url: `${baseUrl}/become-a-dealer` },
+    { url: `${baseUrl}/about` },
+    { url: `${baseUrl}/contact` },
+    { url: `${baseUrl}/privacy-policy` },
   ];
 
-  // Policy pages come from WordPress, so only URLs that really resolve are
-  // listed (a hard-coded list had /terms-conditions, which is a 404).
+  // Policy pages come from WordPress, so only URLs that really resolve are listed.
   const known = new Set(staticPages.map((entry) => entry.url));
   const policyPages: MetadataRoute.Sitemap = cmsPages
     .map((page) => `${baseUrl}${page.href}`)
     .filter((url) => !known.has(url))
-    .map((url) => ({ url, changeFrequency: "yearly" as const, priority: 0.4 }));
-
-  // /book-now is listed above; every other landing page lives at /lp/<slug>.
-  const landingPages: MetadataRoute.Sitemap = landingSlugs
-    .filter((slug) => slug !== "book-now")
-    .map((slug) => ({ url: `${baseUrl}/lp/${slug}`, changeFrequency: "weekly" as const, priority: 0.6 }));
+    .map((url) => ({ url }));
 
   const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,
     lastModified: new Date(post.date),
-    changeFrequency: "monthly",
-    priority: 0.7,
   }));
 
-
-  return [...staticPages, ...policyPages, ...landingPages, ...postPages];
+  return [...staticPages, ...policyPages, ...postPages];
 }

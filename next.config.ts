@@ -57,6 +57,8 @@ const nextConfig: NextConfig = {
       },
       // The CMS calls the home page "/home"; on this storefront it is "/".
       { source: "/home", destination: "/", permanent: true },
+      // There is no paginated blog yet: /blog/page/2 used to 307 to the home page.
+      { source: "/blog/page/:page", destination: "/blog", permanent: true },
     ];
   },
   async headers() {

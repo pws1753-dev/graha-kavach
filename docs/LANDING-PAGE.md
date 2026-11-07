@@ -35,7 +35,7 @@ Leave a section's fields empty and it disappears: Why it matters, What is in the
 
 ## Countdown
 
-Runs in India time. By default it counts to the daily cut-off in "Offer ends daily at" and restarts the next day. For a real campaign end date, fill "Fixed offer end" (for example `2026-10-31 23:59`); the timer then shows days too ("02d 05:12:33") and stops at zero. The /book-now page is set to end on 31 Oct 2026, 11:59 pm. The price itself always follows WooCommerce, so end the sale there too.
+Runs in India time and, by default, as a rolling cycle: the offer ends every "Cycle days" days (default 3, i.e. 72 hours) on a grid anchored at 8 Nov 2026 00:00 IST (`end = anchor + ceil((now - anchor) / cycle) * cycle`). It reads "2 दिन 23:59:59", then "1 दिन …", then "0 दिन …", and the moment it hits 00:00:00 the next cycle starts. Change the length with "Cycle days" in Offer & timer; `0` switches to the daily cut-off in "Offer ends daily at". "Fixed offer end" is optional and only used while it is still in the future; once it passes, the rolling cycle takes over so the timer never sits at 00:00:00. The price itself always follows WooCommerce, so end the sale there too.
 
 ## Orders
 

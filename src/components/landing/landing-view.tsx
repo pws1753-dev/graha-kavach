@@ -5,6 +5,7 @@ import { fillTokens, localPhoneDigits, type LandingPricing } from "@/lib/landing
 import { formatMinorUnitsToCurrency } from "@/lib/woocommerce/adapters";
 import { ArrowIcon, CheckIcon, Rich } from "./rich";
 import { Timer, TimerBoxes } from "./countdown";
+import { showsDays } from "@/lib/landing/countdown";
 
 type Props = {
   landing: WpLanding;
@@ -57,7 +58,7 @@ export function LandingView({ landing, pricing, bookHref, logo }: Props) {
 
   const timerUnits = landing.timerUnits.split(",").map((u) => u.trim()).filter(Boolean);
   const dayWord = timerUnits.length > 3 ? timerUnits[0] : "दिन";
-  const showDays = landing.endsAt.trim() !== "";
+  const showDays = showsDays({ endTime: landing.endTime, endsAt: landing.endsAt, cycleDays: landing.cycleDays });
 
   const phone = localPhoneDigits(landing.phone);
   const bookLabel = t(landing.ctaLabel);

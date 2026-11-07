@@ -476,6 +476,8 @@ const RESERVED_PAGE_SLUGS = new Set([
   "wishlist",
   // The campaign landing page has its own route and funnel.
   "book-now",
+  // Created by the shipment-tracking plugin; the storefront serves /track-order itself.
+  "ts-shipment-tracking",
 ]);
 
 export type PolicyPage = { slug: string; title: string; href: string; order: number };

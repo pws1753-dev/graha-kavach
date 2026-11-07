@@ -22,9 +22,10 @@ export function GoogleTags() {
           `,
         }}
       />
+      {/* After the page has loaded: GTM alone blocked the main thread for over a second. */}
       <Script
         id="google-tag-manager"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         dangerouslySetInnerHTML={{
           __html: `
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':

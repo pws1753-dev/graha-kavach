@@ -196,6 +196,25 @@ final class GK_Landing {
 			return 0;
 		}
 
+		/*
+		 * Never create a blank page while the real one exists elsewhere. If the
+		 * campaign page was saved without its parent (it then lives at
+		 * /book-now), put it back under "Landing Pages" instead of seeding an
+		 * empty duplicate, which would replace the real content on the live site.
+		 */
+		$orphan = get_page_by_path( self::SLUG, OBJECT, 'page' );
+		if ( $orphan instanceof WP_Post && 'trash' !== $orphan->post_status ) {
+			wp_update_post(
+				array(
+					'ID'          => $orphan->ID,
+					'post_parent' => $parent,
+					'post_name'   => self::SLUG,
+				)
+			);
+
+			return (int) $orphan->ID;
+		}
+
 		$created = wp_insert_post(
 			array(
 				'post_type'   => 'page',
@@ -229,7 +248,8 @@ final class GK_Landing {
 			// ---- Offer & timer -------------------------------------------
 			array( 'name' => 'lp_topbar_text', 'label' => 'Top bar text', 'type' => 'text', 'gql' => 'topbarText', 'tab' => 'Offer & timer', 'hint' => $tokens ),
 			array( 'name' => 'lp_end_time', 'label' => 'Offer ends daily at', 'type' => 'text', 'gql' => 'endTime', 'tab' => 'Offer & timer', 'hint' => '24-hour time, India time, e.g. 23:59. The countdown restarts every day unless a fixed end below is set.' ),
-			array( 'name' => 'lp_ends_at', 'label' => 'Fixed offer end (optional)', 'type' => 'text', 'gql' => 'endsAt', 'tab' => 'Offer & timer', 'hint' => 'India time, format YYYY-MM-DD HH:MM, e.g. 2026-11-10 23:59. When set, the countdown runs to this moment and stops at zero.' ),
+			array( 'name' => 'lp_cycle_days', 'label' => 'Cycle days', 'type' => 'text', 'gql' => 'cycleDays', 'tab' => 'Offer & timer', 'hint' => 'Rolling countdown: it resets every this-many days (default 3), counted from 8 Nov 2026 00:00 India time, and starts the next cycle the moment it reaches zero. Enter 0 to use the daily cut-off above instead.' ),
+			array( 'name' => 'lp_ends_at', 'label' => 'Fixed offer end (optional)', 'type' => 'text', 'gql' => 'endsAt', 'tab' => 'Offer & timer', 'hint' => 'Leave empty for the rolling cycle. India time, format YYYY-MM-DD HH:MM, e.g. 2026-11-10 23:59. Used only until that moment passes; after it the rolling cycle takes over, so the timer never sits at 00:00:00.' ),
 			array( 'name' => 'lp_timer_label', 'label' => 'Countdown label', 'type' => 'text', 'gql' => 'timerLabel', 'tab' => 'Offer & timer' ),
 			array( 'name' => 'lp_timer_units', 'label' => 'Countdown units', 'type' => 'text', 'gql' => 'timerUnits', 'tab' => 'Offer & timer', 'hint' => 'Words separated by commas: days, hours, minutes, seconds. Days appear only when a fixed offer end is set.' ),
 			array( 'name' => 'lp_sticky_label', 'label' => 'Sticky bar label', 'type' => 'text', 'gql' => 'stickyLabel', 'tab' => 'Offer & timer', 'hint' => $tokens ),
@@ -629,9 +649,6 @@ final class GK_Landing {
 		foreach ( self::copy() as $name => $value ) {
 			update_field( $name, $value, $page_id );
 		}
-
-		// The campaign ends on a fixed date, India time.
-		update_field( 'lp_ends_at', '2026-10-31 23:59', $page_id );
 
 		update_post_meta( $page_id, '_yoast_wpseo_title', 'Graha Kavach 3-in-1 Home Fire Safety Kit | Book Now ₹199' );
 		update_post_meta( $page_id, '_yoast_wpseo_metadesc', 'Graha Kavach 3-in-1 Home Fire Safety Kit: 2 kg ABC Fire Extinguisher, Automatic Fire Ball और Fire Blanket. Limited Time Offer: ₹2,999 की Kit ₹2,499 में. ₹199 में Booking, बाक़ी Cash on Delivery. पूरे भारत में Free Delivery.' );

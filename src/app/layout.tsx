@@ -82,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html
-      lang="en"
+      lang="en-IN"
       className={`${manrope.variable} h-full antialiased`}
       /*
        * The announcement bar is optional and opaque, so its height is part of

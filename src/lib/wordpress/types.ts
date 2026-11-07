@@ -264,6 +264,7 @@ export const wpLandingSchema = z.object({
   topbarText: cmsString,
   endTime: cmsString,
   endsAt: cmsString,
+  cycleDays: cmsString,
   timerLabel: cmsString,
   timerUnits: cmsString,
   stickyLabel: cmsString,

@@ -45,9 +45,9 @@ const WRAP = "mx-auto w-[90%] max-w-[1680px]";
 const SECTION = "py-14 lg:py-20";
 
 export const metadata: Metadata = {
-  title: "Become a Fire Safety Kit Dealer | Graha Kavach Dealership",
+  title: { absolute: "Fire Safety Kit Dealership in India | Graha Kavach" },
   description:
-    "Become a Graha Kavach dealer and sell India's 3-in-1 home fire safety kit. Manufacturer-direct from Udaipur, ISO 9001:2015 certified, minimum order 40 kits. Apply today.",
+    "Become a Graha Kavach dealer and sell India's 3-in-1 home fire safety kit. Manufacturer-direct from Udaipur, ISO 9001:2015 certified. Minimum order 40 kits.",
   alternates: { canonical: PAGE_URL },
   openGraph: {
     title: "Become a Graha Kavach Dealer",
