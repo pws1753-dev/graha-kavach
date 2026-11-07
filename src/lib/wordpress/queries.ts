@@ -230,6 +230,9 @@ export const HOMEPAGE_QUERY = `
   }
 `;
 
+/** The same query without `cycleDays`, for a WordPress plugin that has not been updated yet. */
+export const LANDING_QUERY_WITHOUT_CYCLE = () => LANDING_QUERY.replace(" cycleDays", "");
+
 export const LANDING_QUERY = `
   query Landing($slug: String) {
     grahaKavachLanding(slug: $slug) {
