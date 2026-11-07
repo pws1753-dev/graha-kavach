@@ -28,8 +28,8 @@ function addTableHeaders(html: string): string {
   });
 }
 
-export function cleanPostContent(html: string): string {
-  return (
+export function cleanPostContent(html: string, slug = ""): string {
+  const cleaned = (
     addTableHeaders(html)
       // "...riskiest spots-" -> "...riskiest spots" (headings only)
       .replace(/(<h[2-4][^>]*>)([^<]*?)\s*-\s*(<\/h[2-4]>)/gi, "$1$2$3")
@@ -43,6 +43,9 @@ export function cleanPostContent(html: string): string {
       // A schema block pasted into the body as text
       .replace(/<p>\s*(?:<code>)?\s*(?:&lt;script[^<]*&gt;)?\s*\{\s*(?:"|&quot;|“|&#8220;)@context[\s\S]*?<\/p>/gi, "")
   );
+
+  // With a slug, the home keyword is linked once (and thinned out on the posts that overused it).
+  return slug ? pointKeywordAtHome(cleaned, slug) : cleaned;
 }
 
 const FAQ_SECTION = /<h([23])[^>]*>\s*Frequently Asked Questions\s*<\/h\1>/i;
@@ -76,4 +79,56 @@ export function extractFaqs(html: string): Array<{ q: string; a: string }> {
   }
 
   return faqs.slice(0, 15);
+}
+
+/* ------------------------------------------------------------------ */
+/* One page, one keyword                                               */
+/* ------------------------------------------------------------------ */
+
+const HOME_KEYWORD = /(?<!\b(?:small|automatic|abc|best|household|kitchen|portable)\s)\bfire extinguisher for home\b(?!\s+use)/gi;
+
+/**
+ * Posts that used the home page's exact keyword so often (14, 9, 5 and 4 times)
+ * that Google could not tell which page should rank for it. Each keeps its own
+ * topic keyword; here the home keyword stays once, as a link to the home page.
+ */
+const CANNIBALIZING_POSTS = new Set([
+  "small-fire-extinguisher-for-home-manual-vs-automatic-options",
+  "best-fire-extinguisher-for-home-in-india-types-size-guide",
+  "abc-fire-extinguisher-for-home-right-choice",
+  "fire-extinguisher-for-home-buying-guide-india",
+]);
+
+const SKIP_TAGS = /^h[1-6]$|^a$|^script$|^style$|^button$/;
+
+/**
+ * Links the first plain-text use of "fire extinguisher for home" to the home page,
+ * and in the posts that over-used it, rewrites the other uses as "home fire
+ * extinguisher". Headings, existing links and markup are left alone.
+ */
+export function pointKeywordAtHome(html: string, slug: string): string {
+  const rewriteRest = CANNIBALIZING_POSTS.has(slug);
+  let seen = 0;
+  let skipping = 0;
+
+  return html
+    .split(/(<[^>]*>)/)
+    .map((part) => {
+      if (part.startsWith("<")) {
+        const tag = /^<(\/?)([a-z][a-z0-9]*)/i.exec(part);
+        if (tag && SKIP_TAGS.test(tag[2].toLowerCase()) && !part.endsWith("/>")) {
+          skipping = Math.max(0, skipping + (tag[1] ? -1 : 1));
+        }
+        return part;
+      }
+      if (skipping > 0 || !part) return part;
+
+      return part.replace(HOME_KEYWORD, (match) => {
+        seen += 1;
+        if (seen === 1) return `<a href="/">${match}</a>`;
+        if (!rewriteRest) return match;
+        return match[0] === match[0].toUpperCase() ? "Home fire extinguisher" : "home fire extinguisher";
+      });
+    })
+    .join("");
 }

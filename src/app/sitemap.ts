@@ -24,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/blog` },
     { url: `${baseUrl}/become-a-dealer` },
     { url: `${baseUrl}/about` },
+    { url: `${baseUrl}/author/rakesh-mishra` },
     { url: `${baseUrl}/contact` },
     { url: `${baseUrl}/privacy-policy` },
   ];

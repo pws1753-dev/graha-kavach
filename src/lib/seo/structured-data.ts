@@ -242,7 +242,9 @@ export function buildProductSchema(
 export const BLOG_AUTHOR = {
   name: "Rakesh Mishra",
   jobTitle: "Founder, Speciality Geochem",
+  /** His own site: a sameAs link, while his profile page on this site is `path`. */
   url: "https://therakeshmishra.com/",
+  path: "/author/rakesh-mishra",
 } as const;
 
 /**
@@ -281,7 +283,7 @@ export function buildArticleSchema({
     author: {
       "@type": "Person",
       name: BLOG_AUTHOR.name,
-      url: BLOG_AUTHOR.url,
+      url: `${BASE_URL}${BLOG_AUTHOR.path}`,
       jobTitle: BLOG_AUTHOR.jobTitle,
       sameAs: [BLOG_AUTHOR.url],
     },

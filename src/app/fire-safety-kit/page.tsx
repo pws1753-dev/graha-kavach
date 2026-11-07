@@ -27,7 +27,8 @@ import { getPosts, getProductContent } from "@/lib/wordpress/adapters";
 import { stripHtml } from "@/lib/wordpress/format";
 import { isNotFound } from "@/lib/errors";
 
-export const dynamic = "force-dynamic";
+// Static with a 60 s refresh (the price window); WordPress edits arrive through the webhook.
+export const revalidate = 60;
 
 const fallbackSpecs = [
   ["Extinguisher", "Capacity", "2 kg ABC dry powder"],

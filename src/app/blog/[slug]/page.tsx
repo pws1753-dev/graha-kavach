@@ -95,7 +95,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   void _organizationContext;
   void _breadcrumbContext;
   // FAQPage from the visible FAQ section: AI search reads it even where Google shows no rich result.
-  const faqSchema = buildFaqSchema(extractFaqs(cleanPostContent(post.content)));
+  const faqSchema = buildFaqSchema(extractFaqs(cleanPostContent(post.content, post.slug)));
   const faqNode = faqSchema ? (({ "@context": _faqContext, ...node }) => (void _faqContext, node))(faqSchema) : null;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -178,7 +178,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               </div>
               <div>
                 <p className="text-xs font-semibold text-foreground">
-                  {BLOG_AUTHOR.name}
+                  <Link href={BLOG_AUTHOR.path} rel="author" className="hover:underline">
+                    {BLOG_AUTHOR.name}
+                  </Link>
                 </p>
                 <p className="text-[11px] text-foreground-muted">{BLOG_AUTHOR.jobTitle}</p>
                 <div className="flex items-center gap-1.5 text-xs text-foreground-muted">
@@ -199,7 +201,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <div className="mt-10">
           <div
             className="gk-article"
-            dangerouslySetInnerHTML={{ __html: cleanPostContent(post.content) }}
+            dangerouslySetInnerHTML={{ __html: cleanPostContent(post.content, post.slug) }}
           />
         </div>
 

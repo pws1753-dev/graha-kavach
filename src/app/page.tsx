@@ -33,7 +33,9 @@ import {
 } from "@/lib/seo/structured-data";
 import type { Media } from "@/types";
 
-export const dynamic = "force-dynamic";
+// Static with a 60 s refresh (the price window): a cacheable page instead of a no-store one.
+// WordPress edits still reach it at once through the revalidation webhook.
+export const revalidate = 60;
 
 const SITE_URL = siteConfig.frontendUrl.replace(/\/$/, "");
 const HOME_H1 = "Fire Extinguisher for Home: 2 kg ABC, Ready for Indian Homes";
