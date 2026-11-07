@@ -127,6 +127,7 @@ export const POSTS_QUERY = `
         excerpt
         content
         date
+        modified
         categories {
           nodes {
             name
@@ -161,6 +162,7 @@ export const POST_BY_SLUG_QUERY = `
       excerpt
       content
       date
+      modified
       categories {
         nodes {
           name

@@ -54,7 +54,7 @@ export function normalizeTitle(raw: string): string {
 export function normalizeDescription(raw: string): string {
   const text = stripHtml(raw).replace(/\s+/g, " ").trim();
 
-  if (text.length <= DESC_MAX) return text;
+  if (text.length <= DESC_MAX) return /[.!?…]$/.test(text) || !text ? text : `${text}.`;
 
   const head = text.slice(0, DESC_MAX);
   const sentenceEnd = Math.max(head.lastIndexOf(". "), head.lastIndexOf("! "), head.lastIndexOf("? "));

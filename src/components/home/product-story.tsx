@@ -50,7 +50,7 @@ export function HomeTextMarquee() {
     "Made for Indian homes",
     "Mount it before you need it",
   ];
-  const track = [...messages, ...messages, ...messages];
+  const track = [...messages, ...messages];
 
   return (
     <section className="overflow-hidden border-b border-border bg-foreground text-white">

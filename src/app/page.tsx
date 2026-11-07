@@ -42,7 +42,12 @@ const HOME_INTRO =
 
 export async function generateMetadata(): Promise<Metadata> {
   // The CMS "home" page only carries the title "Home", so the home SEO is defined here.
+  // Shared links (WhatsApp, Facebook) show the product, not just the logo.
+  const product = await getPrimaryProduct().catch(() => null);
+  const productImage = product?.images?.[0]?.src ?? null;
+
   return buildSeoMetadata({
+    fallbackImage: productImage,
     fallbackTitle: "Buy Fire Extinguisher for Home | 2 kg ABC | Graha Kavach",
     fallbackDescription:
       "Buy a 2 kg ABC fire extinguisher for home, packed with an automatic fire ball and fire blanket. Free delivery and COD across India.",

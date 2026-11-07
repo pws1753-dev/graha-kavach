@@ -8,11 +8,12 @@ import { ShareButtons } from "@/components/blog/share-buttons";
 import { BlogCard } from "@/components/blog/blog-card";
 
 import { buildSeoMetadata } from "@/lib/seo/metadata";
-import { cleanPostContent } from "@/lib/wordpress/post-content";
+import { cleanPostContent, extractFaqs } from "@/lib/wordpress/post-content";
 import {
   BLOG_AUTHOR,
   buildArticleSchema,
   buildBreadcrumbSchema,
+  buildFaqSchema,
   buildOrganizationSchema,
 } from "@/lib/seo/structured-data";
 
@@ -79,6 +80,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     excerpt: stripHtml(post.seo?.metaDesc || "") || stripHtml(post.excerpt),
     slug: post.slug,
     date: post.date,
+    modified: post.modified || undefined,
     image: featuredImgUrl,
   });
   const breadcrumbSchema = buildBreadcrumbSchema([
@@ -92,9 +94,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { "@context": _breadcrumbContext, ...breadcrumbNode } = breadcrumbSchema;
   void _organizationContext;
   void _breadcrumbContext;
+  // FAQPage from the visible FAQ section: AI search reads it even where Google shows no rich result.
+  const faqSchema = buildFaqSchema(extractFaqs(cleanPostContent(post.content)));
+  const faqNode = faqSchema ? (({ "@context": _faqContext, ...node }) => (void _faqContext, node))(faqSchema) : null;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@graph": [articleSchema, breadcrumbNode, organizationNode],
+    "@graph": [articleSchema, breadcrumbNode, organizationNode, ...(faqNode ? [faqNode] : [])],
   };
 
   return (

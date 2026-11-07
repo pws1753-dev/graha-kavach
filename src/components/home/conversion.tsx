@@ -485,9 +485,10 @@ export function FinalCta({
               Complete Home Fire Protection
             </span>
 
-            <h2 className="mt-3.5 text-3xl leading-[1.12] font-semibold tracking-[-0.025em] text-white sm:text-4xl lg:text-[46px] text-balance">
+            {/* The mobile layout above carries the H2; a second one made the heading appear twice. */}
+            <p className="mt-3.5 text-3xl leading-[1.12] font-semibold tracking-[-0.025em] text-white sm:text-4xl lg:text-[46px] text-balance">
               The day you need it is not the day to buy it.
-            </h2>
+            </p>
 
             <p className="mt-3.5 text-base lg:text-lg leading-relaxed text-white/80 max-w-md lg:max-w-lg">
               One kit, mounted where you can reach it — covering every critical second before a small fire becomes uncontrollable.
