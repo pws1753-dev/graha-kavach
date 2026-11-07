@@ -58,6 +58,7 @@ final class GK_Landing {
 		add_action( 'admin_menu', array( __CLASS__, 'register_menu' ) );
 		add_action( 'admin_post_gk_landing_new', array( __CLASS__, 'handle_new' ) );
 		add_filter( 'display_post_states', array( __CLASS__, 'post_states' ), 10, 2 );
+		add_filter( 'wp_insert_post_data', array( __CLASS__, 'keep_parent' ), 10, 2 );
 	}
 
 	/* ------------------------------------------------------------------ *
@@ -171,6 +172,28 @@ final class GK_Landing {
 			&& 'page' === $post->post_type
 			&& (int) $post->post_parent > 0
 			&& (int) $post->post_parent === self::parent_id();
+	}
+
+	/**
+	 * Keep a landing page under "Landing Pages" whatever an editor saves.
+	 *
+	 * Quick Edit, a page-attributes change or an import can save the page with
+	 * no parent. It then stops being found at /lp/<slug>, and the storefront
+	 * would lose its content. A landing page keeps its parent.
+	 *
+	 * @param array<string,mixed> $data    Slashed post data about to be saved.
+	 * @param array<string,mixed> $postarr Raw post data, including the ID.
+	 * @return array<string,mixed>
+	 */
+	public static function keep_parent( $data, $postarr ) {
+		$id = isset( $postarr['ID'] ) ? (int) $postarr['ID'] : 0;
+		if ( ! $id || 'page' !== ( $data['post_type'] ?? '' ) || ! self::is_landing( $id ) ) {
+			return $data;
+		}
+
+		$data['post_parent'] = self::parent_id();
+
+		return $data;
 	}
 
 	/**
