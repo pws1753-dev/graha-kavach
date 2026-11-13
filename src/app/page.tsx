@@ -38,7 +38,7 @@ import type { Media } from "@/types";
 export const revalidate = 60;
 
 const SITE_URL = siteConfig.frontendUrl.replace(/\/$/, "");
-const HOME_H1 = "Fire Extinguisher for Home: 2 kg ABC, Ready for Indian Homes";
+const HOME_H1 = "Fire Extinguisher for Home: Protection Built for Indian Homes";
 const HOME_INTRO =
   "Buy a 2 kg ABC fire extinguisher for home, packed with an automatic fire ball and a fire blanket in one complete kit. Made in Udaipur by Speciality Geochem, with free delivery and cash on delivery across India.";
 
@@ -50,9 +50,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return buildSeoMetadata({
     fallbackImage: productImage,
-    fallbackTitle: "Buy Fire Extinguisher for Home | 2 kg ABC | Graha Kavach",
+    fallbackTitle: "Fire Extinguisher for Home in India | Graha Kavach",
     fallbackDescription:
-      "Buy a 2 kg ABC fire extinguisher for home, packed with an automatic fire ball and fire blanket. Free delivery and COD across India.",
+      "Buy a fire extinguisher for home online in India. ABC extinguisher with an automatic fire ball and fire blanket in one box. ₹2,499, free delivery and COD.",
     path: "/",
     keywords: [
       "home fire safety kit",
@@ -311,9 +311,9 @@ export default async function Home() {
         "@type": "WebPage",
         "@id": `${SITE_URL}/#webpage`,
         url: SITE_URL,
-        name: "Buy Fire Extinguisher for Home | 2 kg ABC | Graha Kavach",
+        name: "Fire Extinguisher for Home in India | Graha Kavach",
         description:
-          "Buy a 2 kg ABC fire extinguisher for home, packed with an automatic fire ball and fire blanket. Free delivery and COD across India.",
+          "Buy a fire extinguisher for home online in India. ABC extinguisher with an automatic fire ball and fire blanket in one box.",
         inLanguage: "en-IN",
         isPartOf: { "@id": `${SITE_URL}/#website` },
         about: { "@id": `${SITE_URL}/#organization` },

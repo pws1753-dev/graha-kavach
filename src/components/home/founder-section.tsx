@@ -41,8 +41,9 @@ export function FounderSection({ notesHtml }: Props) {
               Founder & Business Owner, Speciality Geochem (Est. 2010)
             </p>
 
+            <h3 className="mt-4 text-sm font-semibold text-foreground">A note from our founder, Rakesh Mishra</h3>
             {/* Short Quote */}
-            <div className="mt-4 border-l-2 border-primary pl-4 py-0.5 text-foreground italic text-sm sm:text-base leading-relaxed">
+            <div className="mt-2 border-l-2 border-primary pl-4 py-0.5 text-foreground italic text-sm sm:text-base leading-relaxed">
               “A manufacturing business is only as strong as the systems behind it. Every facility we run is certified, every product is tested, and we never compromise on what leaves the factory.”
             </div>
 

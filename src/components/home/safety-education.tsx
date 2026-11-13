@@ -39,7 +39,7 @@ export function RiskAreas() {
               Fire can start anywhere
             </span>
             <h2 className="mt-3 text-3xl leading-[1.14] font-medium tracking-[-0.025em] text-balance text-foreground lg:text-[42px]">
-              Prepare around the places everyday risk gathers.
+              Where you need a fire extinguisher at home.
             </h2>
             <p className="mt-4 leading-7 text-foreground-muted">
               Most house fires start in one of a handful of predictable spots — not from anything

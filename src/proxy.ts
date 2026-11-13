@@ -15,6 +15,23 @@ const WORDPRESS_URL = (process.env.WORDPRESS_URL || "https://admin.grahakavach.i
 const REFRESH_SECONDS = 60;
 const FETCH_TIMEOUT_MS = 1500;
 
+// Permanent editorial consolidations. These remain here as a safety net even
+// if the WordPress redirect service is temporarily unavailable.
+const FALLBACK_REDIRECTS: Rule[] = [
+  {
+    from: "/blog/best-fire-extinguisher-for-home-in-india-types-size-guide",
+    to: "/blog/fire-extinguisher-for-home-buying-guide-india",
+    code: 301,
+    wild: false,
+  },
+  {
+    from: "/blog/fire-extinguisher-for-home-in-india-buying-guide",
+    to: "/blog/fire-extinguisher-for-home-buying-guide-india",
+    code: 301,
+    wild: false,
+  },
+];
+
 async function loadRules(): Promise<Rule[]> {
   try {
     const response = await fetch(`${WORDPRESS_URL}/wp-json/gk/v1/redirects`, {
@@ -40,7 +57,7 @@ function findRule(rules: Rule[], pathname: string): Rule | undefined {
 }
 
 export async function proxy(request: NextRequest) {
-  const rule = findRule(await loadRules(), request.nextUrl.pathname);
+  const rule = findRule(await loadRules(), request.nextUrl.pathname) ?? findRule(FALLBACK_REDIRECTS, request.nextUrl.pathname);
 
   if (!rule) return NextResponse.next();
 

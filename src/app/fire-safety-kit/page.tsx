@@ -179,9 +179,9 @@ import {
 export async function generateMetadata(): Promise<Metadata> {
   const { product } = await getKitData();
   // The on-page H1 comes from the CMS headline; the search title is written for the query people type.
-  const title = "Fire Safety Kit for Home | 3-in-1 Fire Extinguisher Kit";
+  const title = "Fire Safety Kit for Home: 3-in-1 Combo | Graha Kavach";
   const description =
-    "Buy the Graha Kavach fire safety kit for home: 2 kg ABC fire extinguisher, automatic fire ball and fire blanket in one combo. Free delivery, COD.";
+    "Graha Kavach fire safety kit for home: a 3-in-1 fire extinguisher combo with ABC extinguisher, automatic fire ball, fire blanket and wall mounts. ₹2,499, COD.";
 
   return buildSeoMetadata({
     fallbackTitle: title,
@@ -432,6 +432,34 @@ export default async function FireSafetyKitPage() {
                 ))}
               </div>
             ) : null}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-background-subtle py-10 sm:py-16">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-10">
+          <p className="gk-text-gradient text-sm font-medium uppercase tracking-[0.18em]">Care and support</p>
+          <h2 className="mt-3 text-3xl font-medium text-foreground">Refill, expiry and warranty</h2>
+          <div className="mt-5 space-y-4 leading-8 text-foreground-muted">
+            <p>
+              Check the extinguisher pressure gauge and seal regularly, and have any used extinguisher serviced before
+              relying on it again. Follow the service interval and replacement information printed on each product and
+              its documentation; requirements can vary by manufacturer and use.
+            </p>
+            <div className="overflow-x-auto border border-border bg-white">
+              <table className="w-full min-w-[520px] text-left text-sm">
+                <thead className="bg-background-subtle"><tr><th className="border-b border-border p-4">Item</th><th className="border-b border-border p-4">After use</th><th className="border-b border-border p-4">Routine check</th></tr></thead>
+                <tbody>
+                  <tr><td className="border-b border-border p-4 font-medium">Fire extinguisher</td><td className="border-b border-border p-4">Arrange servicing or refill before reuse.</td><td className="border-b border-border p-4">Check gauge, seal and physical condition.</td></tr>
+                  <tr><td className="border-b border-border p-4 font-medium">Automatic fire ball</td><td className="border-b border-border p-4">Replace after activation.</td><td className="border-b border-border p-4">Check its listed shelf life and mounting condition.</td></tr>
+                  <tr><td className="p-4 font-medium">Fire blanket</td><td className="p-4">Let it cool, then replace it if it is damaged.</td><td className="p-4">Keep the pouch visible and accessible.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Keep your invoice for support and warranty queries. For a refill, replacement or warranty assistance,
+              please <Link className="text-primary underline underline-offset-4" href="/contact">contact Graha Kavach support</Link>.
+            </p>
           </div>
         </div>
       </section>

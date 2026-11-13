@@ -48,7 +48,7 @@ export function ProductBento(_props?: {
             <h2 className="mt-3.5 text-3xl leading-[1.12] font-bold tracking-tight text-foreground sm:text-4xl lg:text-[44px]">
               Three products.
               <br />
-              <span className="text-[#dc2626]">One complete fire extinguisher kit</span> for your home.
+              <span className="text-[#dc2626]">One home fire protection system.</span>
             </h2>
 
             <p className="mt-3.5 max-w-xl text-sm sm:text-base leading-relaxed text-foreground-muted">
