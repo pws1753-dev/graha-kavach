@@ -63,6 +63,7 @@ export async function POST(request: Request) {
     }
 
     const { address, paymentMethod, items, couponCode, idempotencyKey } = parsed.data;
+    const checkoutContext = extractClientContext(request);
 
     // Check idempotency cache
     const cacheKey = `${idempotencyKey}:${paymentMethod}`;
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
       ? computeAdvanceMinor(await getCodAdvanceConfig(), validatedCart.totalMinor)
       : 0;
     const codAdvance = isCod && isRazorpayConfigured() && advanceMinor > 0;
-    if (isLanding && !codAdvance) {
+    if ((isLanding || (isCod && advanceMinor > 0)) && !codAdvance) {
       return NextResponse.json({ error: "Online booking payment is temporarily unavailable. Please contact us." }, { status: 503 });
     }
     const initialStatus = "checkout-draft";
@@ -141,6 +142,7 @@ export async function POST(request: Request) {
         phone: address.phone,
       },
       shipping: {
+        phone: address.phone,
         first_name: address.firstName,
         last_name: address.lastName,
         company: address.company || "",
@@ -160,6 +162,7 @@ export async function POST(request: Request) {
       meta_data: [
         { key: "_idempotency_key", value: idempotencyKey },
         { key: "_source", value: isLanding ? "nextjs-landing" : "nextjs-headless" },
+        { key: "_gk_meta_context", value: checkoutContext },
         // Which landing page the order came from, for ad reporting.
         ...(isLanding && landingSlug ? [{ key: "_landing_page", value: landingSlug }] : []),
         // Pinned now so the payment check later does not depend on the setting still being the same.

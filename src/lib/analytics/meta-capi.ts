@@ -4,7 +4,7 @@ export const META_PIXEL_ID =
   process.env.NEXT_PUBLIC_META_PIXEL_ID || "1790598735635524";
 
 export const META_CONVERSIONS_API_ACCESS_TOKEN =
-  process.env.META_CONVERSIONS_API_ACCESS_TOKEN || "";
+  process.env.META_CONVERSIONS_API_ACCESS_TOKEN || process.env.META_ACCESS_TOKEN || "";
 
 function sha256(value: string): string {
   return crypto.createHash("sha256").update(value).digest("hex");
@@ -138,6 +138,7 @@ export async function sendMetaCapiEvent(
     const url = `https://graph.facebook.com/v22.0/${pixelId}/events?access_token=${token}`;
 
     const res = await fetch(url, {
+      signal: AbortSignal.timeout(5000),
       method: "POST",
       headers: {
         "Content-Type": "application/json",

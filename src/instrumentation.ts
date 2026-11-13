@@ -10,8 +10,8 @@ const REQUIRED: { name: string; why: string }[] = [
   { name: "RESEND_API_KEY", why: "contact, dealer and order emails are not sent" },
   { name: "META_CONVERSIONS_API_ACCESS_TOKEN", why: "Meta server-side events (Conversions API) are not sent" },
   { name: "REVALIDATION_SECRET", why: "content edits in WordPress do not refresh the site" },
-  { name: "WC_CONSUMER_KEY", why: "WooCommerce access uses the key built into the code" },
-  { name: "WC_CONSUMER_SECRET", why: "WooCommerce access uses the key built into the code" },
+  { name: "WC_CONSUMER_KEY", why: "WooCommerce products and checkout are unavailable" },
+  { name: "WC_CONSUMER_SECRET", why: "WooCommerce products and checkout are unavailable" },
 ];
 
 export function register() {

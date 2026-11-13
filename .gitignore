@@ -54,3 +54,4 @@ backups/
 # Local, reversible order-repair snapshots.
 .local/order-repair/
 .local/mcp/
+.local/

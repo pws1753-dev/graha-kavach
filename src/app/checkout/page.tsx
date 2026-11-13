@@ -9,7 +9,7 @@ import { AddressForm } from "@/components/checkout/address-form";
 import { PaymentSelector } from "@/components/checkout/payment-selector";
 import { CheckoutReview } from "@/components/checkout/checkout-review";
 import { indianAddressSchema, type IndianAddress } from "@/lib/validation/checkout";
-import { payWithRazorpay } from "@/lib/razorpay/client";
+import { confirmRazorpayPayment, payWithRazorpay } from "@/lib/razorpay/client";
 import { computeAdvanceMinor, isCodMethod, type CodAdvanceConfig } from "@/lib/config/checkout";
 import { formatMinorUnitsToCurrency } from "@/lib/woocommerce/adapters";
 import { trackInitiateCheckout } from "@/lib/analytics/meta-pixel";
@@ -225,16 +225,12 @@ export default function CheckoutPage() {
           throw new Error(`${result.message} Please try again or choose Cash on Delivery.`);
         }
 
-        const confirmRes = await fetch("/api/checkout/razorpay/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        const confirmed = await confirmRazorpayPayment({
             wooOrderId: data.orderId,
             orderKey: data.orderKey,
             ...result.payment,
-          }),
         });
-        if (!confirmRes.ok) {
+        if (!confirmed) {
           throw new Error(
             "Your payment went through but we could not confirm it yet. Please do not pay again — contact support with order #" +
               data.orderId +

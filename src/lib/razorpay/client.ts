@@ -2,7 +2,7 @@
 
 const SCRIPT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
 
-type RazorpaySuccess = {
+export type RazorpaySuccess = {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
@@ -19,6 +19,27 @@ declare global {
   }
 }
 
+/** Retry only the confirmation of an existing payment; never open or charge again. */
+export async function confirmRazorpayPayment(input: RazorpaySuccess & { wooOrderId: number; orderKey: string }): Promise<boolean> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const response = await fetch("/api/checkout/razorpay/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+        signal: AbortSignal.timeout(10_000),
+      });
+      const result = await response.json().catch(() => ({})) as { success?: boolean; code?: string };
+      if (response.ok && result.success === true) return true;
+      if (response.status < 500 && result.code !== "payment_pending_capture") return false;
+    } catch {
+      // A lost response can follow a successful write. Retrying is idempotent.
+    }
+    if (attempt < 4) await new Promise((resolve) => window.setTimeout(resolve, (attempt + 1) * 750));
+  }
+  return false;
+}
+
 let scriptPromise: Promise<void> | null = null;
 
 function loadScript() {
@@ -29,11 +50,19 @@ function loadScript() {
     const script = document.createElement("script");
     script.src = SCRIPT_SRC;
     script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => {
+    const fail = () => {
+      window.clearTimeout(timer);
+      script.remove();
       scriptPromise = null;
       reject(new Error("Could not load the secure payment window. Check your connection and try again."));
     };
+    const timer = window.setTimeout(fail, 15_000);
+    script.onload = () => {
+      if (!window.Razorpay) { fail(); return; }
+      window.clearTimeout(timer);
+      resolve();
+    };
+    script.onerror = fail;
     document.head.appendChild(script);
   });
 
@@ -63,6 +92,7 @@ export async function payWithRazorpay(input: PayInput): Promise<RazorpayResult> 
   if (!Razorpay) throw new Error("Secure payment window is unavailable.");
 
   return new Promise<RazorpayResult>((resolve) => {
+    let lastFailure = "";
     const options: Record<string, unknown> = {
       key: input.keyId,
       order_id: input.orderId,
@@ -71,10 +101,10 @@ export async function payWithRazorpay(input: PayInput): Promise<RazorpayResult> 
       name: input.name || "Graha Kavach",
       description: input.description || "Fire Safety Order",
       theme: { color: "#E01820" },
-      one_click_checkout: input.one_click_checkout ?? true,
+      one_click_checkout: input.one_click_checkout ?? false,
       handler: (payment: RazorpaySuccess) => resolve({ status: "paid", payment }),
       modal: {
-        ondismiss: () => resolve({ status: "dismissed" }),
+        ondismiss: () => resolve(lastFailure ? { status: "failed", message: lastFailure } : { status: "dismissed" }),
         backdropclose: false,
         escape: true,
       },
@@ -86,12 +116,11 @@ export async function payWithRazorpay(input: PayInput): Promise<RazorpayResult> 
 
     const instance = new Razorpay(options);
 
-    instance.on("payment.failed", (response) =>
-      resolve({
-        status: "failed",
-        message: response.error?.description || "The payment could not be completed.",
-      }),
-    );
+    // Razorpay permits a retry inside the same popup. Do not settle the promise
+    // on its first failure: that would discard a later successful payment.
+    instance.on("payment.failed", (response) => {
+      lastFailure = response.error?.description || "The payment could not be completed.";
+    });
 
     instance.open();
   });

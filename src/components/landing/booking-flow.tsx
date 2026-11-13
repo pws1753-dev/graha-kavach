@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { trackInitiateCheckout, trackPurchase } from "@/lib/analytics/meta-pixel";
 import { reportVerifiedPurchase } from "@/lib/analytics/google-purchase";
 import type { CountdownConfig } from "@/lib/landing/countdown";
-import { payWithRazorpay } from "@/lib/razorpay/client";
+import { confirmRazorpayPayment, payWithRazorpay } from "@/lib/razorpay/client";
 import { CARD_LOGOS, PaymentLogos, UPI_LOGOS, type PaymentLogoId } from "@/components/commerce/payment-logos";
 import { INDIAN_STATES } from "@/lib/validation/checkout";
 import { CountdownProvider, Timer, useCountdown } from "./countdown";
@@ -320,12 +320,8 @@ export function BookingFlow({
       if (result.status === "dismissed") throw new Error("भुगतान पूरा नहीं हुआ। बुकिंग सेव है, दोबारा बटन दबाइए।");
       if (result.status === "failed") throw new Error(`${result.message} कृपया दोबारा कोशिश कीजिए।`);
 
-      const confirm = await fetch("/api/checkout/razorpay/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wooOrderId: current.orderId, orderKey: current.orderKey, ...result.payment }),
-      });
-      if (!confirm.ok) {
+      const confirmed = await confirmRazorpayPayment({ wooOrderId: current.orderId, orderKey: current.orderKey, ...result.payment });
+      if (!confirmed) {
         throw new Error(`आपका भुगतान हो गया है, पर पुष्टि में देरी है। दोबारा भुगतान न करें। कृपया बुकिंग ID ${current.orderNumber} के साथ हमें कॉल कीजिए।`);
       }
 

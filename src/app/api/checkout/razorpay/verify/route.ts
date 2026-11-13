@@ -31,6 +31,7 @@ type WooOrder = {
   currency?: string;
   payment_method: string;
   transaction_id?: string;
+  meta_data?: Array<{ key: string; value: unknown }>;
   billing?: {
     first_name?: string;
     last_name?: string;
@@ -102,17 +103,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Payment does not match this order." }, { status: 400 });
     }
     if (paymentDetails.status !== "captured") {
-      return NextResponse.json({ error: "Payment has not been captured yet. Please contact support before paying again." }, { status: 409 });
+      return NextResponse.json({ code: "payment_pending_capture", error: "Payment capture is being confirmed. Do not pay again." }, { status: 409 });
+    }
+    if (Number(paymentDetails.amount_refunded || 0) > 0) {
+      return NextResponse.json({ error: "This payment has a refund and requires manual review." }, { status: 409 });
     }
     const awaitingPayment = ["checkout-draft", "pending", "failed", "on-hold"].includes(order.status);
     if (!awaitingPayment) {
-      if (["processing", "completed", "delivered"].includes(order.status) && order.transaction_id === razorpay_payment_id) {
-        return NextResponse.json({ success: true });
+      if (!["processing", "completed", "shipped", "delivered"].includes(order.status) || order.transaction_id !== razorpay_payment_id) {
+        return NextResponse.json({ error: "This order cannot be confirmed automatically. Please contact support." }, { status: 409 });
       }
-      return NextResponse.json({ error: "This order cannot be confirmed automatically. Please contact support." }, { status: 409 });
     }
 
-    if (isCodAdvance) {
+    if (isCodAdvance && awaitingPayment) {
       // Advance received: the order is confirmed, the balance is collected on delivery.
       const balance = ((totalMinor - expectedAmount) / 100).toFixed(2);
 
@@ -149,7 +152,7 @@ export async function POST(request: Request) {
         },
         revalidate: false,
       });
-    } else {
+    } else if (awaitingPayment) {
       const updateBody: Record<string, unknown> = {
         set_paid: true,
         status: "processing",
@@ -180,13 +183,17 @@ export async function POST(request: Request) {
     }
 
     // Report verified payment to Meta Conversions API
-    const { clientIp, clientUserAgent, fbp, fbc } = extractClientContext(request);
-    void sendMetaCapiEvent({
+    const savedContext = order.meta_data?.find((m) => m.key === "_gk_meta_context")?.value;
+    const context = savedContext && typeof savedContext === "object"
+      ? savedContext as ReturnType<typeof extractClientContext>
+      : extractClientContext(request);
+    const { clientIp, clientUserAgent, fbp, fbc } = context;
+    await sendMetaCapiEvent({
       eventName: "Purchase",
       eventId: order.number || String(wooOrderId),
       eventSourceUrl: "https://grahakavach.in/checkout",
       userData: {
-        email: order.billing?.email,
+        email: order.billing?.email || (typeof paymentDetails.email === "string" ? paymentDetails.email : undefined),
         phone: order.billing?.phone,
         firstName: order.billing?.first_name,
         lastName: order.billing?.last_name,

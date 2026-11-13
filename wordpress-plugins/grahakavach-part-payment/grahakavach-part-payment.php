@@ -3,7 +3,7 @@
  * Plugin Name:       Graha Kavach Part Payment & Invoice
  * Plugin URI:        https://grahakavach.in
  *Description:       Shows Cash on Delivery orders that took an online advance as part-paid: "Paid online" and "Balance due on delivery" in wp-admin, emails, the thank-you page and the PDF invoice (PDF Invoices & Packing Slips by WP Overnight).
- * Version:           1.1.2
+ * Version:           1.2.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Graha Kavach
@@ -21,6 +21,11 @@ declare( strict_types = 1 );
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
+}
+
+// Keep order/payment functions available even during an interrupted plugin upload.
+if ( is_readable( __DIR__ . '/includes/class-gk-sales-tools.php' ) ) {
+	require_once __DIR__ . '/includes/class-gk-sales-tools.php';
 }
 
 final class GK_Part_Payment {
@@ -259,7 +264,7 @@ final class GK_Part_Payment {
 	private static function render_cell( $order ): void {
 		if ( ! $order instanceof WC_Order ) { return; }
 		if ( in_array( $order->get_status(), array( 'checkout-draft', 'pending', 'failed', 'cancelled' ), true ) && self::advance( $order ) <= 0 && ! $order->is_paid() ) {
-			echo '<strong style="color:#b45309">' . esc_html__( 'Payment not received - unconfirmed', 'grahakavach-part-payment' ) . '</strong>';
+			echo '<strong style="color:#b45309" title="Payment not received; do not dispatch">' . esc_html( 'cancelled' === $order->get_status() ? 'Unpaid - cancelled' : 'Unpaid - unconfirmed' ) . '</strong>';
 			return;
 		}
 		$state = self::state( $order );
@@ -348,6 +353,7 @@ add_action(
 	static function (): void {
 		if ( class_exists( 'WooCommerce' ) ) {
 			GK_Part_Payment::init();
+			if ( class_exists( 'GK_Sales_Tools' ) ) { GK_Sales_Tools::init(); }
 		}
 	}
 );

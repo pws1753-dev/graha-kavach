@@ -28,6 +28,7 @@ async function rpc(method,params,notification=false) {
       const result=await rpc('tools/call',{name:call.name,arguments:call.arguments});
       if(call.output)fs.writeFileSync(call.output,JSON.stringify(result,null,2));
       else console.log(JSON.stringify({name:call.name,result}));
+      if(result.isError)throw new Error('WordPress MCP operation failed: '+call.name);
     }
   }else{
     const args=JSON.parse(fs.readFileSync(process.argv[3],'utf8'));

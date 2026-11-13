@@ -40,8 +40,8 @@ const serverSchema = z.object({
   WORDPRESS_URL: url("https://admin.grahakavach.in"),
   WORDPRESS_GRAPHQL_URL: url("https://admin.grahakavach.in/graphql"),
   WOOCOMMERCE_URL: url("https://admin.grahakavach.in"),
-  WC_CONSUMER_KEY: str("ck_3a584215f9aac5b5da95df76e56e7b6c247968a7"),
-  WC_CONSUMER_SECRET: str("cs_4a159dd0701483c7c6aa603af5f75136401dc724"),
+  WC_CONSUMER_KEY: str(""),
+  WC_CONSUMER_SECRET: str(""),
   REVALIDATION_SECRET: str(""),
   // Razorpay Checkout. The secret is server-only; the key id is handed to the browser by the order API.
   RAZORPAY_KEY_ID: str(""),

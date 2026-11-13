@@ -3,7 +3,7 @@
  * Plugin Name:       Graha Kavach Headless Core
  * Plugin URI:        https://grahakavach.in
  * Description:       Project-specific integration code for the Graha Kavach headless stack. Keeps backend noindex, exposes global settings to GraphQL without ACF Pro, signs revalidation webhooks to Next.js, and applies a strict CORS allowlist.
- * Version:           1.3.9
+ * Version:           1.4.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Graha Kavach
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GK_HEADLESS_VERSION', '1.3.9' );
+define( 'GK_HEADLESS_VERSION', '1.4.0' );
 define( 'GK_HEADLESS_FILE', __FILE__ );
 define( 'GK_HEADLESS_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -59,6 +59,7 @@ require_once GK_HEADLESS_DIR . 'includes/class-gk-seed.php';
 require_once GK_HEADLESS_DIR . 'includes/class-gk-landing.php';
 require_once GK_HEADLESS_DIR . 'includes/class-gk-contact-migrate.php';
 require_once GK_HEADLESS_DIR . 'includes/class-gk-order-tax.php';
+require_once GK_HEADLESS_DIR . 'includes/class-gk-payment-reconciliation.php';
 require_once GK_HEADLESS_DIR . 'includes/class-gk-shipment-status.php';
 
 /**
@@ -80,6 +81,7 @@ function gk_headless_bootstrap(): void {
 	GK_Admin::init();
 	GK_Redirects::init();
 	GK_Order_Tax::init();
+	GK_Payment_Reconciliation::init();
 	GK_Shipment_Status::init();
 
 	// Phase 3 content model.
@@ -109,6 +111,7 @@ register_activation_hook(
 register_deactivation_hook(
 	__FILE__,
 	static function (): void {
+		wp_clear_scheduled_hook( 'gk_reconcile_payments' );
 		flush_rewrite_rules();
 	}
 );

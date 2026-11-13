@@ -1,4 +1,26 @@
 import type { NextConfig } from "next";
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
+// Stable across build/start and all instances using the same source snapshot.
+// Protects an already-open booking page when a deployment replaces its chunks.
+function sourceDeploymentId() {
+  const hash = createHash("sha256");
+  function visit(directory: string) {
+    for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory()) visit(path);
+      else if (/\.(?:ts|tsx|css|woff2)$/.test(entry.name)) {
+        const contents = readFileSync(path);
+        hash.update(path.replaceAll("\\", "/")).update(entry.name.endsWith(".woff2") ? contents : contents.toString("utf8").replaceAll("\r\n", "\n"));
+      }
+    }
+  }
+  visit("src");
+  hash.update(readFileSync("package-lock.json", "utf8").replaceAll("\r\n", "\n"));
+  return hash.digest("hex").slice(0, 20);
+}
 
 const cspHeader = `
   default-src 'self';
@@ -17,6 +39,7 @@ const cspHeader = `
   .trim();
 
 const nextConfig: NextConfig = {
+  deploymentId: process.env.NEXT_DEPLOYMENT_ID || process.env.GITHUB_SHA || process.env.VERCEL_GIT_COMMIT_SHA || sourceDeploymentId(),
   poweredByHeader: false,
   compress: true,
   reactStrictMode: true,

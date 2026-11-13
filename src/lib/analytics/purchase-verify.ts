@@ -15,7 +15,7 @@ export type PurchaseCheckOrder = {
 /** Order meta that records the Google Ads purchase event was already released for this order. */
 export const GADS_TRACKED_META = "_gads_purchase_tracked";
 
-const COUNTED_STATUSES = ["processing", "completed"];
+const COUNTED_STATUSES = ["processing", "completed", "shipped", "delivered"];
 
 function meta(order: PurchaseCheckOrder, key: string): string {
   const value = order.meta_data?.find((m) => m.key === key)?.value;
