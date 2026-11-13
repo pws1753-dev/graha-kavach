@@ -39,6 +39,7 @@ export const revalidate = 60;
 
 const SITE_URL = siteConfig.frontendUrl.replace(/\/$/, "");
 const HOME_H1 = "Fire Extinguisher for Home: Protection Built for Indian Homes";
+const HOME_FEATURE_TITLE = "Why this is the best fire extinguisher for home use";
 const HOME_INTRO =
   "Buy a 2 kg ABC fire extinguisher for home, packed with an automatic fire ball and a fire blanket in one complete kit. Made in Udaipur by Speciality Geochem, with free delivery and cash on delivery across India.";
 
@@ -389,7 +390,7 @@ export default async function Home() {
       <CompleteKit image={kitImage} contents={kitContents} />
 
       <FeatureCarouselSection
-        title={homePage?.featureCarouselTitle || ""}
+        title={HOME_FEATURE_TITLE}
         intro={homePage?.featureCarouselIntro || ""}
         images={homePage?.featureCarouselImages ?? []}
         autoplaySeconds={homePage?.featureCarouselAutoplay ?? 5}
