@@ -219,7 +219,7 @@ export default function CheckoutPage() {
         });
 
         if (result.status === "dismissed") {
-          throw new Error("Payment was cancelled. Your order is saved — press Pay to try again.");
+          throw new Error("Payment was cancelled. Your booking is unconfirmed. Press Pay to try again.");
         }
         if (result.status === "failed") {
           throw new Error(`${result.message} Please try again or choose Cash on Delivery.`);

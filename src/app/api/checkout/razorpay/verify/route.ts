@@ -30,6 +30,7 @@ type WooOrder = {
   total: string;
   currency?: string;
   payment_method: string;
+  transaction_id?: string;
   billing?: {
     first_name?: string;
     last_name?: string;
@@ -89,11 +90,29 @@ export async function POST(request: Request) {
           totalMinor,
         )
       : totalMinor;
-    if (rzpOrder.receipt !== String(wooOrderId) || rzpOrder.amount !== expectedAmount) {
+    const paymentDetails = await fetchRazorpayPayment(razorpay_payment_id);
+    if (
+      rzpOrder.receipt !== String(wooOrderId) ||
+      rzpOrder.amount !== expectedAmount ||
+      rzpOrder.currency !== (order.currency || "INR") ||
+      paymentDetails.order_id !== razorpay_order_id ||
+      paymentDetails.amount !== expectedAmount ||
+      paymentDetails.currency !== (order.currency || "INR")
+    ) {
       return NextResponse.json({ error: "Payment does not match this order." }, { status: 400 });
     }
+    if (paymentDetails.status !== "captured") {
+      return NextResponse.json({ error: "Payment has not been captured yet. Please contact support before paying again." }, { status: 409 });
+    }
+    const awaitingPayment = ["checkout-draft", "pending", "failed", "on-hold"].includes(order.status);
+    if (!awaitingPayment) {
+      if (["processing", "completed", "delivered"].includes(order.status) && order.transaction_id === razorpay_payment_id) {
+        return NextResponse.json({ success: true });
+      }
+      return NextResponse.json({ error: "This order cannot be confirmed automatically. Please contact support." }, { status: 409 });
+    }
 
-    if (isCodAdvance && order.status === "pending") {
+    if (isCodAdvance) {
       // Advance received: the order is confirmed, the balance is collected on delivery.
       const balance = ((totalMinor - expectedAmount) / 100).toFixed(2);
 
@@ -102,8 +121,7 @@ export async function POST(request: Request) {
       // It goes in the same update as the status change, so the email sees it.
       let billingEmail = "";
       if (!order.billing?.email) {
-        const payment = await fetchRazorpayPayment(razorpay_payment_id).catch(() => null);
-        const candidate = typeof payment?.email === "string" ? payment.email.trim() : "";
+        const candidate = typeof paymentDetails.email === "string" ? paymentDetails.email.trim() : "";
         if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) billingEmail = candidate;
       }
 
@@ -131,11 +149,7 @@ export async function POST(request: Request) {
         },
         revalidate: false,
       });
-    } else if (
-      !isCodAdvance &&
-      (order.status === "pending" || order.status === "failed" || order.status === "on-hold")
-    ) {
-      const paymentDetails = await fetchRazorpayPayment(razorpay_payment_id).catch(() => null);
+    } else {
       const updateBody: Record<string, unknown> = {
         set_paid: true,
         status: "processing",

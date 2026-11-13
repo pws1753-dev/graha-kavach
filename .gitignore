@@ -51,3 +51,6 @@ backups/
 # The example env file is a template with empty values and is safe to commit,
 # unlike the .env* rule above which would otherwise exclude it.
 !.env.example
+# Local, reversible order-repair snapshots.
+.local/order-repair/
+.local/mcp/

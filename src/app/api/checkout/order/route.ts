@@ -109,14 +109,17 @@ export async function POST(request: Request) {
     // COD is set to 'processing' (or 'on-hold') and unpaid
     const isCod = isCodMethod(selectedGateway.id);
     // COD takes a small advance online when Razorpay is set up; the order then
-    // stays pending until that advance is paid. Without Razorpay it is plain COD.
+    // stays a draft until that advance is paid. Without Razorpay it is plain COD.
     // The advance amount comes from the WordPress deposit settings, so a price
     // change in wp-admin applies here without a deploy.
     const advanceMinor = isCod
       ? computeAdvanceMinor(await getCodAdvanceConfig(), validatedCart.totalMinor)
       : 0;
     const codAdvance = isCod && isRazorpayConfigured() && advanceMinor > 0;
-    const initialStatus = isCod && !codAdvance ? "processing" : "pending";
+    if (isLanding && !codAdvance) {
+      return NextResponse.json({ error: "Online booking payment is temporarily unavailable. Please contact us." }, { status: 503 });
+    }
+    const initialStatus = "checkout-draft";
 
     // Construct WooCommerce Order Payload
     const orderPayload = {
@@ -187,6 +190,28 @@ export async function POST(request: Request) {
       revalidate: false,
     });
 
+    // Never request payment for a total different from the tax-inclusive cart.
+    if (!Number.isFinite(Number(wooOrder.total)) || Math.abs(Math.round(Number(wooOrder.total) * 100) - validatedCart.totalMinor) > 1) {
+      await wooRequest({
+        path: `/orders/${wooOrder.id}`,
+        method: "PUT",
+        body: { status: "cancelled" },
+        revalidate: false,
+      });
+      return NextResponse.json({ error: "The order total could not be confirmed. No payment was requested. Please contact us." }, { status: 502 });
+    }
+
+    // Confirm plain COD only after its total has passed validation.
+    if (isCod && !codAdvance) {
+      await wooRequest({
+        path: `/orders/${wooOrder.id}`,
+        method: "PUT",
+        body: { status: "processing" },
+        revalidate: false,
+      });
+      wooOrder.status = "processing";
+    }
+
     // Razorpay pays inside the site's own popup. The Razorpay order is created
     // here because it needs the secret key; the browser only gets the order id.
     let razorpay: IdempotencyEntry["response"]["razorpay"] = null;
@@ -205,6 +230,12 @@ export async function POST(request: Request) {
           amount: rzpOrder.amount,
           currency: rzpOrder.currency,
         };
+        await wooRequest({
+          path: `/orders/${wooOrder.id}`,
+          method: "PUT",
+          body: { meta_data: [{ key: "razorpay_order_id", value: rzpOrder.id }] },
+          revalidate: false,
+        });
       } catch (error) {
         // Do not leave an unpayable pending order behind.
         await wooRequest({

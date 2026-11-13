@@ -90,7 +90,7 @@ function OrderConfirmationContent() {
         const data: OrderConfirmationData = await res.json();
         setOrder(data);
         // Online orders keep the cart until the payment is confirmed.
-        if (!["pending", "failed", "cancelled"].includes(data.status)) {
+        if (["processing", "completed", "shipped", "delivered"].includes(data.status)) {
           clearCart();
           // Google Ads purchase: the server decides whether it is a paid, unreported order.
           void reportVerifiedPurchase(data.orderId, key as string);
@@ -149,6 +149,16 @@ function OrderConfirmationContent() {
             Return to Home
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (!["processing", "completed", "shipped", "delivered"].includes(order.status)) {
+    return (
+      <div className="mx-auto max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center">
+        <h1 className="text-2xl font-medium">{order.status === "cancelled" ? "Order cancelled" : "Booking not confirmed"}</h1>
+        <p className="mt-3 text-sm">Payment confirmation is required before dispatch. If money was deducted, please contact support with booking #{order.orderNumber} before paying again.</p>
+        <Link href="/contact" className="mt-5 inline-block font-medium underline">Contact support</Link>
       </div>
     );
   }
@@ -242,7 +252,7 @@ function OrderConfirmationContent() {
               ) : null}
 
               <div className="flex justify-between text-muted-foreground">
-                <span>Taxes</span>
+                <span>GST (included in total)</span>
                 <span className="font-medium text-foreground">
                   {parseFloat(order.taxTotal) > 0 ? `₹${order.taxTotal}` : "₹0"}
                 </span>

@@ -191,10 +191,10 @@ export async function validateCartServer(
   const shippingMinor = 0;
   const shippingNotice = "Free Standard Shipping";
 
-  // Tax from WooCommerce config:
-  // Currently 0 tax rates configured in WC. Default to 0 with clear notice.
+  // Product prices already include GST. taxMinor is additional tax, not the
+  // included GST breakdown recorded by WooCommerce on the final order.
   const taxMinor = 0;
-  const taxNotice = "Taxes included / Not applicable";
+  const taxNotice = "Inclusive of all taxes";
 
   const totalMinor = Math.max(0, subtotalMinor - discountMinor + shippingMinor + taxMinor);
 

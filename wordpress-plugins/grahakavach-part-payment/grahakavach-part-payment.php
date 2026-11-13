@@ -3,7 +3,7 @@
  * Plugin Name:       Graha Kavach Part Payment & Invoice
  * Plugin URI:        https://grahakavach.in
  *Description:       Shows Cash on Delivery orders that took an online advance as part-paid: "Paid online" and "Balance due on delivery" in wp-admin, emails, the thank-you page and the PDF invoice (PDF Invoices & Packing Slips by WP Overnight).
- * Version:           1.1.1
+ * Version:           1.1.2
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Author:            Graha Kavach
@@ -257,9 +257,16 @@ final class GK_Part_Payment {
 	}
 
 	private static function render_cell( $order ): void {
+		if ( ! $order instanceof WC_Order ) { return; }
+		if ( in_array( $order->get_status(), array( 'checkout-draft', 'pending', 'failed', 'cancelled' ), true ) && self::advance( $order ) <= 0 && ! $order->is_paid() ) {
+			echo '<strong style="color:#b45309">' . esc_html__( 'Payment not received - unconfirmed', 'grahakavach-part-payment' ) . '</strong>';
+			return;
+		}
 		$state = self::state( $order );
 		if ( '' === $state ) {
-			echo '<span style="color:#15803d">' . esc_html__( 'Paid online', 'grahakavach-part-payment' ) . '</span>';
+			echo $order->is_paid()
+				? '<span style="color:#15803d">' . esc_html__( 'Paid online', 'grahakavach-part-payment' ) . '</span>'
+				: '<span style="color:#b45309">' . esc_html__( 'Payment not received', 'grahakavach-part-payment' ) . '</span>';
 			return;
 		}
 		if ( 'cod' === $state ) {
