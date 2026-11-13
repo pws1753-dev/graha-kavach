@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { secondsLeft, splitSeconds, type CountdownConfig } from "@/lib/landing/countdown";
+import { countdownState, showsDays, splitSeconds, type CountdownConfig } from "@/lib/landing/countdown";
 
 type Parts = { dd: string; hh: string; mm: string; ss: string };
 type Clock = { parts: Parts; /** A fixed multi-day deadline shows days too. */ showDays: boolean };
@@ -24,15 +24,21 @@ export function CountdownProvider({
   children: React.ReactNode;
 }) {
   const [parts, setParts] = useState<Parts>(PLACEHOLDER);
-  const showDays = config.endsAt.trim() !== "";
+  // Before the first tick, guess from the settings so the boxes do not jump.
+  const [showDays, setShowDays] = useState(() => showsDays(config));
+  const { endTime, endsAt, cycleDays } = config;
 
   useEffect(() => {
     if (!enabled) return;
-    const tick = () => setParts(splitSeconds(secondsLeft(config)));
+    const tick = () => {
+      const state = countdownState({ endTime, endsAt, cycleDays });
+      setParts(splitSeconds(state.seconds));
+      setShowDays(state.showDays);
+    };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [config, enabled]);
+  }, [endTime, endsAt, cycleDays, enabled]);
 
   return <CountdownContext.Provider value={enabled ? { parts, showDays } : null}>{children}</CountdownContext.Provider>;
 }

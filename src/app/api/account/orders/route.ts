@@ -1,25 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSessionCustomer } from "@/lib/auth/session";
-import { wooRequest } from "@/lib/woocommerce/client";
 import { listAccountOrders } from "@/lib/woocommerce/customer-orders";
+import { buildTracking, type TrackableOrder } from "@/lib/woocommerce/order-tracking";
 
-type ASTTrackingItem = {
-  tracking_id: string;
-  tracking_provider: string;
-  tracking_number: string;
-  tracking_link: string;
-  date_shipped: string;
-};
-
-type RawOrder = {
-  id: number;
+type RawOrder = Omit<TrackableOrder, "line_items"> & {
   number: string;
   order_key: string;
-  status: string;
   currency: string;
-  date_created: string;
   customer_id?: number;
-  total: string;
   line_items: {
     id: number;
     name: string;
@@ -42,18 +30,11 @@ export async function GET() {
     // Orders placed while logged in, plus guest orders with the same email or phone
     const orders = await listAccountOrders<RawOrder>(session);
 
-    // Fetch tracking for each order
+    // Live tracking and payment for each order, read fresh so the account page
+    // always shows the courier's latest status without the customer doing anything.
     const enrichedOrders = await Promise.all(
       orders.map(async (order) => {
-        let shipments: ASTTrackingItem[] = [];
-        try {
-          shipments = await wooRequest<ASTTrackingItem[]>({
-            path: `/orders/${order.id}/shipment-trackings`,
-            revalidate: false,
-          });
-        } catch {
-          shipments = [];
-        }
+        const tracking = await buildTracking(order);
 
         return {
           id: order.id,
@@ -72,21 +53,22 @@ export async function GET() {
           })),
           shipping: order.shipping,
           billing: order.billing,
-          shipments: shipments.map((s) => ({
-            trackingNumber: s.tracking_number,
-            trackingProvider: s.tracking_provider,
-            trackingLink: s.tracking_link,
-            dateShipped: s.date_shipped,
+          shipments: tracking.shipments.map((s) => ({
+            trackingNumber: s.trackingNumber,
+            trackingProvider: s.carrier,
+            trackingLink: s.trackingUrl,
+            dateShipped: s.shippedOn,
           })),
-          isShipped:
-            shipments.length > 0 ||
-            order.status === "completed" ||
-            order.status === "processing",
+          isShipped: tracking.isShipped,
+          tracking,
         };
       }),
     );
 
-    return NextResponse.json({ orders: enrichedOrders });
+    return NextResponse.json(
+      { orders: enrichedOrders },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } },
+    );
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to load orders", details: String(error) },

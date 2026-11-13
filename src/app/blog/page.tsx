@@ -17,7 +17,7 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
 
   const fallbackTitle = activeCat
     ? `${activeCat.name} Guides — Fire Safety Blog`
-    : "Fire Safety Blog & Practical Guides";
+    : "Fire Safety Blog: Guides for Indian Homes";
 
   const fallbackDescription = activeCat
     ? `Browse official Graha Kavach ${activeCat.name.toLowerCase()} articles, operating manuals, and expert fire safety recommendations.`
@@ -88,7 +88,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             Knowledge Base & Practical Guides
           </span>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
-            Fire Safety Insights
+            Fire Safety Blog: Guides for Indian Homes
           </h1>
           <p className="mt-4 text-base text-foreground-muted sm:text-lg">
             Practical knowledge for home preparedness, equipment maintenance, and emergency response. Sourced directly from our engineering team in Udaipur.

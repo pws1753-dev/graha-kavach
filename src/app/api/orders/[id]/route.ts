@@ -59,7 +59,7 @@ type WooRawOrder = {
   };
   line_items: WooOrderItem[];
   fee_lines?: { id: number; name: string; total: string }[];
-  meta_data?: { key: string; value: any }[];
+  meta_data?: { key: string; value: unknown }[];
 };
 
 export async function GET(

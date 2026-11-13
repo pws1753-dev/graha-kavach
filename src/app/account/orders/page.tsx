@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  PaymentBadge,
+  TRACKING_STEPS,
+  paymentSentence,
+  summarizeTracking,
+  type TrackingData,
+} from "@/components/tracking/tracking-view";
+import { useAutoRefresh } from "@/lib/hooks/use-auto-refresh";
 
 type OrderItem = {
   id: number;
@@ -13,62 +21,74 @@ type OrderItem = {
 type OrderSummary = {
   id: number;
   number: string;
-  orderKey: string;
   status: string;
   dateCreated: string;
   total: string;
-  currency: string;
-  itemCount: number;
   items: OrderItem[];
-  shipping: Record<string, string>;
-  billing: Record<string, string>;
-  shipments: {
-    trackingNumber: string;
-    trackingProvider: string;
-    trackingLink: string;
-    dateShipped: string;
-  }[];
-  isShipped: boolean;
+  tracking: TrackingData;
 };
+
+const toneClass = { good: "text-emerald-700", warn: "text-amber-700", bad: "text-red-700" } as const;
+
+/** Four small steps under the headline, filled up to where the parcel is. */
+function MiniProgress({ stage }: { stage: number }) {
+  return (
+    <ol className="mt-3 grid grid-cols-4 gap-1.5" aria-label="Order progress">
+      {TRACKING_STEPS.map((label, i) => (
+        <li key={label}>
+          <span className={`block h-1.5 rounded-full ${i <= stage ? "bg-emerald-600" : "bg-stone-200"}`} />
+          <span className={`mt-1 block text-[10px] leading-tight ${i === stage ? "font-bold text-foreground" : "text-stone-500"}`}>
+            {label}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 export default function AccountOrdersPage() {
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const loadOrders = useCallback(async () => {
+    try {
+      const res = await fetch("/api/account/orders", { cache: "no-store" });
+      if (!res.ok) throw new Error("load failed");
+      const data = await res.json();
+      setOrders(data.orders || []);
+      setFailed(false);
+    } catch {
+      // Keep whatever is already on screen; only flag it when there is nothing to show.
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function loadOrders() {
-      try {
-        const res = await fetch("/api/account/orders");
-        if (res.ok) {
-          const data = await res.json();
-          setOrders(data.orders || []);
-        }
-      } catch {
-        // Ignore
-      } finally {
-        setLoading(false);
-      }
-    }
+    // The fetch settles asynchronously; state is only set after it resolves.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadOrders();
+  }, [loadOrders]);
 
-    loadOrders();
-  }, []);
+  // Courier updates reach the page by themselves while it stays open.
+  useAutoRefresh(loadOrders);
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-border bg-white p-6 shadow-xs sm:p-8">
         <div className="border-b border-border pb-4">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            My Orders
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">My Orders</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Complete history of your Graha Kavach equipment purchases and shipment tracking
+            Every order with its live delivery status and payment. The status updates by itself as your parcel moves.
           </p>
         </div>
 
         {loading ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
             <div className="inline-block size-8 animate-spin rounded-full border-3 border-primary border-t-transparent" />
-            <p className="mt-3">Loading order history...</p>
+            <p className="mt-3">Loading your orders...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="py-16 text-center">
@@ -79,9 +99,13 @@ export default function AccountOrdersPage() {
                 <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
             </div>
-            <h2 className="mt-4 text-lg font-medium text-foreground">No Orders Found</h2>
+            <h2 className="mt-4 text-lg font-medium text-foreground">
+              {failed ? "We could not load your orders" : "No Orders Found"}
+            </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              You haven&apos;t placed any orders with Graha Kavach yet.
+              {failed
+                ? "Please refresh the page in a moment."
+                : "You haven't placed any orders with Graha Kavach yet."}
             </p>
             <div className="mt-6">
               <Link
@@ -100,31 +124,37 @@ export default function AccountOrdersPage() {
                 month: "short",
                 day: "numeric",
               });
+              const summary = summarizeTracking(order.tracking);
+              const parcel = order.tracking.shipments[0];
+              const payment = order.tracking.payment;
 
               return (
                 <div
                   key={order.id}
                   className="rounded-xl border border-border bg-stone-50/50 p-5 transition-all hover:border-stone-300 sm:p-6"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 pb-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <span className="font-mono text-base font-bold text-foreground">
-                        Order #{order.number}
-                      </span>
+                      <span className="font-mono text-base font-bold text-foreground">Order #{order.number}</span>
                       <p className="text-xs text-muted-foreground">Placed on {formattedDate}</p>
                     </div>
+                    {payment ? <PaymentBadge payment={payment} /> : null}
+                  </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wider text-stone-700 shadow-xs border border-border">
-                        {order.status}
-                      </span>
-
-                      {order.shipments && order.shipments.length > 0 ? (
-                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                          Shipped: {order.shipments[0].trackingProvider}
-                        </span>
-                      ) : null}
-                    </div>
+                  <div className="mt-4 rounded-xl border border-border bg-white p-4">
+                    <p className={`text-lg font-bold ${toneClass[summary.tone]}`}>{summary.text}</p>
+                    {summary.sub ? <p className="text-sm text-stone-600">{summary.sub}</p> : null}
+                    <MiniProgress stage={summary.stage} />
+                    {parcel?.lastEvent ? (
+                      <p className="mt-3 text-xs text-stone-600">
+                        <span className="font-semibold text-foreground">Latest:</span> {parcel.lastEvent}
+                      </p>
+                    ) : null}
+                    {parcel ? (
+                      <p className="mt-1 font-mono text-[11px] text-stone-500">
+                        {parcel.carrier} · {parcel.trackingNumber}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="mt-4 space-y-1.5">
@@ -142,17 +172,18 @@ export default function AccountOrdersPage() {
                     <div>
                       <span className="text-xs text-muted-foreground">Total:</span>{" "}
                       <span className="text-base font-bold text-foreground">₹{order.total}</span>
+                      {payment ? <p className="mt-0.5 text-xs text-stone-600">{paymentSentence(payment)}</p> : null}
                     </div>
 
                     <div className="flex items-center gap-3">
-                      {order.shipments && order.shipments.length > 0 && order.shipments[0].trackingLink ? (
+                      {parcel?.trackingUrl ? (
                         <a
-                          href={order.shipments[0].trackingLink}
+                          href={parcel.trackingUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
                         >
-                          Track Package ↗
+                          Track on {parcel.carrier} ↗
                         </a>
                       ) : null}
 
@@ -160,7 +191,7 @@ export default function AccountOrdersPage() {
                         href={`/account/orders/${order.id}`}
                         className="rounded-xl bg-white px-4 py-2 text-xs font-semibold text-foreground shadow-xs border border-border hover:bg-stone-100"
                       >
-                        View Details
+                        Track &amp; Details
                       </Link>
                     </div>
                   </div>

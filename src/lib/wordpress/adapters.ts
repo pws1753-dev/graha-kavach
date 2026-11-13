@@ -9,6 +9,7 @@ import {
   GLOBAL_SETTINGS_QUERY,
   HOMEPAGE_QUERY,
   LANDING_QUERY,
+  LANDING_QUERY_WITHOUT_CYCLE,
   LANDING_SLUGS_QUERY,
   PAGE_SEO_BY_ID_QUERY,
   PAGE_BY_SLUG_QUERY,
@@ -317,16 +318,24 @@ const pageSeoResponseSchema = z.object({ page: wpPageSchema.pick({ title: true, 
 
 /** Content of one landing page by slug. Null when it is missing, unpublished or cannot be loaded. */
 export async function getLanding(slug: string) {
-  try {
-    const data = await wpGraphql<z.infer<typeof landingResponseSchema>>({
-      query: LANDING_QUERY,
+  const load = (query: string) =>
+    wpGraphql<z.infer<typeof landingResponseSchema>>({
+      query,
       variables: { slug },
       schema: landingResponseSchema,
       tags: [CacheTag.page(slug), CacheTag.landings],
       revalidate: Revalidate.content,
     });
 
-    return data.grahaKavachLanding;
+  try {
+    try {
+      return (await load(LANDING_QUERY)).grahaKavachLanding;
+    } catch (error) {
+      // The storefront can go live before the WordPress plugin that adds "Cycle days".
+      // Without this the whole landing page would 404 instead of using the default cycle.
+      if (!String(error instanceof Error ? error.message : error).includes("cycleDays")) throw error;
+      return (await load(LANDING_QUERY_WITHOUT_CYCLE())).grahaKavachLanding;
+    }
   } catch (error) {
     console.warn("Failed to fetch landing page content:", error);
     return null;
@@ -476,6 +485,8 @@ const RESERVED_PAGE_SLUGS = new Set([
   "wishlist",
   // The campaign landing page has its own route and funnel.
   "book-now",
+  // Created by the shipment-tracking plugin; the storefront serves /track-order itself.
+  "ts-shipment-tracking",
 ]);
 
 export type PolicyPage = { slug: string; title: string; href: string; order: number };

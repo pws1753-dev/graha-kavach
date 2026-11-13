@@ -1,5 +1,6 @@
 "use client";
 
+import { PaymentLogos, CARD_LOGOS, UPI_LOGOS } from "@/components/commerce/payment-logos";
 import { isCodMethod } from "@/lib/config/checkout";
 import type { PaymentMethodInfo } from "@/lib/woocommerce/payment-gateways";
 
@@ -89,6 +90,10 @@ export function PaymentSelector({
                       : "Pay securely in cash or via UPI QR code upon doorstep delivery."
                     : "Secure instant payment via certified payment gateway.")}
               </p>
+
+              {!isCodMethod(method.id) ? (
+                <PaymentLogos ids={[...UPI_LOGOS, ...CARD_LOGOS]} height={16} className="mt-2.5" />
+              ) : null}
             </div>
           </label>
         );

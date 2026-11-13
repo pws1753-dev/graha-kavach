@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import localFont from "next/font/local";
 import { GoogleTagManagerNoScript, GoogleTags } from "@/components/analytics/google-tags";
 import { MetaPixel } from "@/components/analytics/meta-pixel";
 import { CartDrawer } from "@/components/cart/cart-drawer";
@@ -23,12 +23,16 @@ import { WishlistProvider } from "@/lib/wishlist/wishlist-context";
 import { getGlobalSiteSettings } from "@/lib/wordpress/adapters";
 import "./globals.css";
 
-const manrope = Manrope({
+// Fonts live in the repo (src/fonts), not on Google Fonts: a build must never depend on a
+// network fetch, which failed on the Hostinger build server.
+const manrope = localFont({
   variable: "--font-manrope",
-  subsets: ["latin"],
   // Only 400 and 500 are ever used. Loading 600+ would let a stray utility
   // class introduce a weight the brand does not use.
-  weight: ["400", "500"],
+  src: [
+    { path: "../fonts/manrope-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/manrope-latin-500-normal.woff2", weight: "500", style: "normal" },
+  ],
   display: "swap",
 });
 
@@ -78,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html
-      lang="en"
+      lang="en-IN"
       className={`${manrope.variable} h-full antialiased`}
       /*
        * The announcement bar is optional and opaque, so its height is part of

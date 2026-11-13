@@ -127,6 +127,7 @@ export const POSTS_QUERY = `
         excerpt
         content
         date
+        modified
         categories {
           nodes {
             name
@@ -161,6 +162,7 @@ export const POST_BY_SLUG_QUERY = `
       excerpt
       content
       date
+      modified
       categories {
         nodes {
           name
@@ -230,11 +232,14 @@ export const HOMEPAGE_QUERY = `
   }
 `;
 
+/** The same query without `cycleDays`, for a WordPress plugin that has not been updated yet. */
+export const LANDING_QUERY_WITHOUT_CYCLE = () => LANDING_QUERY.replace(" cycleDays", "");
+
 export const LANDING_QUERY = `
   query Landing($slug: String) {
     grahaKavachLanding(slug: $slug) {
       pageId productSlug hideTimer
-      topbarText endTime endsAt timerLabel timerUnits stickyLabel lockLabel
+      topbarText endTime endsAt cycleDays timerLabel timerUnits stickyLabel lockLabel
       headerTagline ctaShort ctaLabel ctaSticky ctaOffer
       heroBadge heroTitleBefore heroTitleHighlight heroTitleAfter heroText
       heroImage { ${mediaFields} }

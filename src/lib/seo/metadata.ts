@@ -20,14 +20,7 @@ const TITLE_MAX = 60;
 const DESC_MIN = 110;
 const DESC_MAX = 160;
 
-// Appended (in order) to descriptions that are too short to be useful in search results.
-const DESC_FILLERS = [
-  "Certified home fire safety by Speciality Geochem, Udaipur.",
-  "Delivery across India with COD available.",
-];
-
 const BRAND_TAIL = /\s*[|–—-]\s*Graha Kavach(?:™)?\s*$/i;
-const TITLE_BREAKS = /\s+[|–—]\s+|\s+-\s+|:\s+|,\s+/g;
 
 /**
  * One brand suffix, at most 60 characters.
@@ -44,39 +37,24 @@ export function normalizeTitle(raw: string): string {
   if (!core) return BRAND;
 
   // The title already leads with the brand (the home page): never add it again.
-  const suffix = core.toLowerCase().includes(BRAND.toLowerCase()) ? "" : ` | ${BRAND}`;
-  const limit = TITLE_MAX - suffix.length;
-  if (core.length <= limit) return core + suffix;
+  if (core.toLowerCase().includes(BRAND.toLowerCase())) return core;
 
-  for (const match of [...core.matchAll(TITLE_BREAKS)].reverse()) {
-    const head = core.slice(0, match.index).trim();
-    if (head.length >= 20 && head.length <= limit) return head + suffix;
-  }
-
-  // No usable break: trim on a word boundary.
-  const words = core.slice(0, limit + 1).split(" ");
-  words.pop();
-  const trimmed = words
-    .join(" ")
-    .replace(/[\s,;:|&-]+$/, "")
-    .replace(/\s+(and|or|of|the|for|to|in|a|an|with)$/i, "");
-
-  return (trimmed || core.slice(0, limit)) + suffix;
+  // Brand only when the whole title still fits. A long title keeps its full
+  // text and goes without the brand: cutting it at a colon or a word produced
+  // half titles such as "Common Causes of Home Fires in India & How".
+  const withBrand = `${core} | ${BRAND}`;
+  return withBrand.length <= TITLE_MAX ? withBrand : core;
 }
 
-/** 110-160 characters: padded when too short, cut at a sentence or word when too long. */
+/**
+ * At most 160 characters, cut at a sentence or a word. A short description is
+ * left as written: padding it with one shared sentence made the descriptions of
+ * different pages identical.
+ */
 export function normalizeDescription(raw: string): string {
-  let text = stripHtml(raw).replace(/\s+/g, " ").trim();
+  const text = stripHtml(raw).replace(/\s+/g, " ").trim();
 
-  for (const filler of DESC_FILLERS) {
-    if (text.length >= DESC_MIN) break;
-    const already = text.toLowerCase().includes(filler.toLowerCase().slice(0, 25));
-    if (!already && text.length + 1 + filler.length <= DESC_MAX) {
-      text = `${text}${/[.!?]$/.test(text) ? "" : "."} ${filler}`;
-    }
-  }
-
-  if (text.length <= DESC_MAX) return text;
+  if (text.length <= DESC_MAX) return /[.!?…]$/.test(text) || !text ? text : `${text}.`;
 
   const head = text.slice(0, DESC_MAX);
   const sentenceEnd = Math.max(head.lastIndexOf(". "), head.lastIndexOf("! "), head.lastIndexOf("? "));
@@ -184,9 +162,8 @@ export function buildSeoMetadata({
       "Graha Kavach",
       "Speciality Geochem Udaipur",
     ],
-    alternates: {
-      canonical,
-    },
+    // A noindex page with a canonical to another URL sends mixed signals, so it has none.
+    alternates: isNoindex ? undefined : { canonical },
     robots: {
       index: !isNoindex,
       follow: !isNofollow,

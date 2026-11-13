@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 24" fill="none">
-  <!-- RuPay Text in Official Deep Blue #093354 -->
-  <text x="0" y="19" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-style="italic" font-size="22" fill="#093354" letter-spacing="-0.5">RuPay</text>
-  <!-- Chevron 1: Cyan / Light Blue #00A5D9 -->
-  <path d="M68 4L75 12L68 20H72.5L79.5 12L72.5 4H68Z" fill="#00A5D9"/>
-  <!-- Chevron 2: Orange #F37021 -->
-  <path d="M76 4L83 12L76 20H80.5L87.5 12L80.5 4H76Z" fill="#F37021"/>
-</svg>

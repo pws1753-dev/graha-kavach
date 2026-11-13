@@ -8,7 +8,14 @@ import { ShareButtons } from "@/components/blog/share-buttons";
 import { BlogCard } from "@/components/blog/blog-card";
 
 import { buildSeoMetadata } from "@/lib/seo/metadata";
-import { buildArticleSchema, buildBreadcrumbSchema } from "@/lib/seo/structured-data";
+import { cleanPostContent, extractFaqs } from "@/lib/wordpress/post-content";
+import {
+  BLOG_AUTHOR,
+  buildArticleSchema,
+  buildBreadcrumbSchema,
+  buildFaqSchema,
+  buildOrganizationSchema,
+} from "@/lib/seo/structured-data";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -38,7 +45,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
   return buildSeoMetadata({
     seo: post.seo,
-    fallbackTitle: `${cleanTitle} | Graha Kavach Safety Guide`,
+    fallbackTitle: cleanTitle,
     fallbackDescription: cleanExcerpt,
     path: `/blog/${post.slug}`,
     fallbackImage: featuredImgUrl,
@@ -62,25 +69,37 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const readingTime = calculateReadingTime(post.content);
   const featuredImgUrl = post.featuredImage?.node?.sourceUrl;
 
+  // A category that is also called "Blog" would read "Home > Blog > Blog > Article".
+  const showCategory = Boolean(primaryCategory) && categoryName.trim().toLowerCase() !== "blog";
+
   const relatedPosts = await getRelatedPosts(categorySlug, post.slug, 3);
 
   const articleSchema = buildArticleSchema({
     title: cleanTitle,
-    excerpt: stripHtml(post.excerpt),
+    // The meta description, not the WordPress excerpt, which ends in "[…]".
+    excerpt: stripHtml(post.seo?.metaDesc || "") || stripHtml(post.excerpt),
     slug: post.slug,
     date: post.date,
+    modified: post.modified || undefined,
     image: featuredImgUrl,
   });
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: "Home", path: "/" },
     { name: "Blog", path: "/blog" },
-    ...(primaryCategory ? [{ name: categoryName, path: `/blog?category=${categorySlug}` }] : []),
+    ...(showCategory ? [{ name: categoryName, path: `/blog?category=${categorySlug}` }] : []),
     { name: cleanTitle, path: `/blog/${post.slug}` },
   ]);
 
+  const { "@context": _organizationContext, ...organizationNode } = buildOrganizationSchema();
+  const { "@context": _breadcrumbContext, ...breadcrumbNode } = breadcrumbSchema;
+  void _organizationContext;
+  void _breadcrumbContext;
+  // FAQPage from the visible FAQ section: AI search reads it even where Google shows no rich result.
+  const faqSchema = buildFaqSchema(extractFaqs(cleanPostContent(post.content, post.slug)));
+  const faqNode = faqSchema ? (({ "@context": _faqContext, ...node }) => (void _faqContext, node))(faqSchema) : null;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@graph": [articleSchema, breadcrumbSchema],
+    "@graph": [articleSchema, breadcrumbNode, organizationNode, ...(faqNode ? [faqNode] : [])],
   };
 
   return (
@@ -108,7 +127,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 Blog
               </Link>
             </li>
-            {primaryCategory && (
+            {showCategory && (
               <>
                 <li>
                   <ChevronRight className="h-3 w-3 text-foreground-muted/60" />
@@ -159,8 +178,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               </div>
               <div>
                 <p className="text-xs font-semibold text-foreground">
-                  Graha Kavach Fire Safety Team
+                  <Link href={BLOG_AUTHOR.path} rel="author" className="hover:underline">
+                    {BLOG_AUTHOR.name}
+                  </Link>
                 </p>
+                <p className="text-[11px] text-foreground-muted">{BLOG_AUTHOR.jobTitle}</p>
                 <div className="flex items-center gap-1.5 text-xs text-foreground-muted">
                   <Calendar className="h-3 w-3" />
                   <time dateTime={post.date}>{formattedDate}</time>
@@ -179,7 +201,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <div className="mt-10">
           <div
             className="gk-article"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: cleanPostContent(post.content, post.slug) }}
           />
         </div>
 

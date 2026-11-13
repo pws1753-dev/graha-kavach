@@ -207,6 +207,7 @@ export const wpPageSchema = z.object({
 
 export const wpPostSchema = wpPageSchema.extend({
   date: z.string(),
+  modified: z.string().nullable().optional().transform((value) => value ?? ""),
   categories: z
     .object({
       nodes: z.array(z.object({ name: z.string(), slug: z.string() })),
@@ -264,6 +265,7 @@ export const wpLandingSchema = z.object({
   topbarText: cmsString,
   endTime: cmsString,
   endsAt: cmsString,
+  cycleDays: cmsString,
   timerLabel: cmsString,
   timerUnits: cmsString,
   stickyLabel: cmsString,

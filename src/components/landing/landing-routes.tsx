@@ -34,6 +34,7 @@ export async function landingMetadata(slug: string): Promise<Metadata> {
     fallbackTitle: page?.title || FALLBACK_TITLE,
     fallbackDescription: FALLBACK_DESCRIPTION,
     path: landingPaths(slug).page,
+    noindex: true,
   });
 }
 
@@ -67,7 +68,7 @@ export async function LandingPageRoute({ slug }: { slug: string }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       {faqSchema ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} /> : null}
       <LandingViewTracker productId={pricing.productId} valueMinor={pricing.priceMinor} />
-      <CountdownProvider config={{ endTime: landing.endTime, endsAt: landing.endsAt }} enabled={!landing.hideTimer}>
+      <CountdownProvider config={{ endTime: landing.endTime, endsAt: landing.endsAt, cycleDays: landing.cycleDays }} enabled={!landing.hideTimer}>
         <LandingView
           landing={landing}
           pricing={pricing}
@@ -95,7 +96,7 @@ export async function BookingRoute({ slug }: { slug: string }) {
       slug={slug}
       landingHref={landingPaths(slug).page}
       hideTimer={landing.hideTimer}
-      countdown={{ endTime: landing.endTime, endsAt: landing.endsAt }}
+      countdown={{ endTime: landing.endTime, endsAt: landing.endsAt, cycleDays: landing.cycleDays }}
       content={{
         logoUrl: settings.logo?.url ?? "/brand/graha-kavach-logo.png",
         logoAlt: settings.logo?.alt || "Graha Kavach",

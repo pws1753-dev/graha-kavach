@@ -1,14 +1,14 @@
 /* Book Now landing page: only what Tailwind utilities cannot express. */
 
 .lp-root {
-  font-family: var(--font-lp-mukta), var(--font-lp-manrope), sans-serif;
+  font-family: var(--font-lp-mukta-latin), var(--font-lp-mukta-dev), var(--font-lp-manrope), sans-serif;
   color: var(--foreground);
   background: var(--muted);
   min-height: 100vh;
 }
 
 .lp-display {
-  font-family: var(--font-lp-manrope), var(--font-lp-mukta), sans-serif;
+  font-family: var(--font-lp-manrope), var(--font-lp-mukta-latin), var(--font-lp-mukta-dev), sans-serif;
 }
 
 .lp-btn {
@@ -22,7 +22,7 @@
   border-radius: 10px;
   color: #fff;
   cursor: pointer;
-  font-family: var(--font-lp-manrope), var(--font-lp-mukta), sans-serif;
+  font-family: var(--font-lp-manrope), var(--font-lp-mukta-latin), var(--font-lp-mukta-dev), sans-serif;
   font-weight: 700;
   font-size: 16.5px;
   text-decoration: none;
@@ -59,7 +59,7 @@
   border: 1px solid var(--border-strong);
   border-radius: 10px;
   padding: 0 14px;
-  font-family: var(--font-lp-mukta), sans-serif;
+  font-family: var(--font-lp-mukta-latin), var(--font-lp-mukta-dev), sans-serif;
   font-size: 17px;
   color: var(--foreground);
   background: #fff;

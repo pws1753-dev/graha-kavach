@@ -24,23 +24,35 @@ import {
 } from "@/lib/wordpress/adapters";
 import { stripHtml } from "@/lib/wordpress/format";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
+import { siteConfig } from "@/lib/config/site";
 import {
   buildFaqSchema,
   buildOrganizationSchema,
-  buildProductSchema,
   buildWebSiteSchema,
   buildLocalBusinessSchema,
 } from "@/lib/seo/structured-data";
 import type { Media } from "@/types";
 
-export const dynamic = "force-dynamic";
+// Static with a 60 s refresh (the price window): a cacheable page instead of a no-store one.
+// WordPress edits still reach it at once through the revalidation webhook.
+export const revalidate = 60;
+
+const SITE_URL = siteConfig.frontendUrl.replace(/\/$/, "");
+const HOME_H1 = "Fire Extinguisher for Home: 2 kg ABC, Ready for Indian Homes";
+const HOME_INTRO =
+  "Buy a 2 kg ABC fire extinguisher for home, packed with an automatic fire ball and a fire blanket in one complete kit. Made in Udaipur by Speciality Geochem, with free delivery and cash on delivery across India.";
 
 export async function generateMetadata(): Promise<Metadata> {
   // The CMS "home" page only carries the title "Home", so the home SEO is defined here.
+  // Shared links (WhatsApp, Facebook) show the product, not just the logo.
+  const product = await getPrimaryProduct().catch(() => null);
+  const productImage = product?.images?.[0]?.src ?? null;
+
   return buildSeoMetadata({
-    fallbackTitle: "Fire Extinguisher for Home - 3-in-1 Kit | Graha Kavach",
+    fallbackImage: productImage,
+    fallbackTitle: "Buy Fire Extinguisher for Home | 2 kg ABC | Graha Kavach",
     fallbackDescription:
-      "Graha Kavach 3-in-1 fire safety kit: 2 kg ABC fire extinguisher for home, automatic fire ball and fire blanket. Free delivery across India.",
+      "Buy a 2 kg ABC fire extinguisher for home, packed with an automatic fire ball and fire blanket. Free delivery and COD across India.",
     path: "/",
     keywords: [
       "home fire safety kit",
@@ -294,7 +306,19 @@ export default async function Home() {
       buildOrganizationSchema(),
       buildWebSiteSchema(),
       buildLocalBusinessSchema(),
-      ...(buildProductSchema(product, reviews) ? [buildProductSchema(product, reviews)] : []),
+      // The full Product lives on /fire-safety-kit only. Two pages with the same Product @id told Google they were one page.
+      {
+        "@type": "WebPage",
+        "@id": `${SITE_URL}/#webpage`,
+        url: SITE_URL,
+        name: "Buy Fire Extinguisher for Home | 2 kg ABC | Graha Kavach",
+        description:
+          "Buy a 2 kg ABC fire extinguisher for home, packed with an automatic fire ball and fire blanket. Free delivery and COD across India.",
+        inLanguage: "en-IN",
+        isPartOf: { "@id": `${SITE_URL}/#website` },
+        about: { "@id": `${SITE_URL}/#organization` },
+        mainEntity: { "@id": `${SITE_URL}/fire-safety-kit/#product` },
+      },
       ...(buildFaqSchema(faqItems.map((faq) => ({ q: faq.title, a: faq.answer })))
         ? [buildFaqSchema(faqItems.map((faq) => ({ q: faq.title, a: faq.answer })))]
         : []),
@@ -317,14 +341,18 @@ export default async function Home() {
            * anything over the banner. The built hero below renders its own
            * H1, so this one only exists on the carousel path.
            */}
-          <h1 className="sr-only">{heroTitle}</h1>
-
           <HeroBanners
             desktop={homePage?.heroBannersDesktop ?? []}
             mobile={homePage?.heroBannersMobile ?? []}
             links={homePage?.heroBannerLinks ?? []}
             autoplaySeconds={homePage?.heroBannerAutoplay ?? null}
           />
+
+          {/* The visible H1: the banner artwork is pixels, and a hidden H1 carries little weight. */}
+          <section className="mx-auto w-[90%] max-w-[1100px] py-8 text-center lg:py-12">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">{HOME_H1}</h1>
+            <p className="mt-4 text-base text-foreground-muted sm:text-lg">{HOME_INTRO}</p>
+          </section>
         </>
       ) : (
         /* No banners uploaded yet — the built hero keeps the page complete. */

@@ -76,11 +76,7 @@ export function buildWebSiteSchema() {
       "@id": `${BASE_URL}/#organization`,
     },
     inLanguage: "en-IN",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${BASE_URL}/blog?category={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
+    // No SearchAction: the site has no search page, and Google retired the sitelinks search box.
   };
 }
 
@@ -191,6 +187,7 @@ export function buildProductSchema(
     description: cleanDescription,
     image: product.images.map((img: { src: string }) => img.src),
     sku: product.sku || `GK-${product.id}`,
+    mpn: "GK-KIT-001",
     brand: {
       "@type": "Brand",
       name: "Graha Kavach",
@@ -241,6 +238,23 @@ export function buildProductSchema(
   };
 }
 
+/** The named author of every guide: a person, not an organisation, so Google can attribute expertise. */
+export const BLOG_AUTHOR = {
+  name: "Rakesh Mishra",
+  jobTitle: "Founder, Speciality Geochem",
+  /** His own site: a sameAs link, while his profile page on this site is `path`. */
+  url: "https://therakeshmishra.com/",
+  path: "/author/rakesh-mishra",
+} as const;
+
+/**
+ * WordPress sends dates without a zone ("2026-10-15T18:00:18", site time).
+ * Schema dates need one, so India time is added when none is present.
+ */
+export function withIstOffset(date: string): string {
+  return /(?:Z|[+-]\d{2}:?\d{2})$/.test(date) ? date : `${date}+05:30`;
+}
+
 export function buildArticleSchema({
   title,
   excerpt,
@@ -250,37 +264,31 @@ export function buildArticleSchema({
   image,
 }: {
   title: string;
+  /** The page's meta description; falls back to the title, never a "[…]" excerpt. */
   excerpt?: string;
   slug: string;
   date: string;
   modified?: string;
   image?: string | null;
 }) {
+  const url = `${BASE_URL}/blog/${slug}`;
   return {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "@id": `${BASE_URL}/blog/${slug}/#article`,
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    mainEntityOfPage: url,
     headline: stripHtml(title),
     description: stripHtml(excerpt || title),
-    datePublished: date,
-    dateModified: modified || date,
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `${BASE_URL}/blog/${slug}`,
-    },
+    datePublished: withIstOffset(date),
+    dateModified: withIstOffset(modified || date),
     author: {
-      "@type": "Organization",
-      name: "Graha Kavach Fire Safety Team",
-      url: BASE_URL,
+      "@type": "Person",
+      name: BLOG_AUTHOR.name,
+      url: `${BASE_URL}${BLOG_AUTHOR.path}`,
+      jobTitle: BLOG_AUTHOR.jobTitle,
+      sameAs: [BLOG_AUTHOR.url],
     },
-    publisher: {
-      "@type": "Organization",
-      name: "Graha Kavach",
-      logo: {
-        "@type": "ImageObject",
-        url: `${BASE_URL}/logo.png`,
-      },
-    },
+    publisher: { "@id": `${BASE_URL}/#organization` },
+    about: { "@id": `${BASE_URL}/fire-safety-kit/#product` },
     image: image || undefined,
   };
 }
@@ -307,7 +315,7 @@ export function buildLocalBusinessSchema() {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "@id": `${BASE_URL}/#localbusiness`,
-    name: "Graha Kavach — Speciality Geochem",
+    name: "Graha Kavach",
     description: "Certified fire safety equipment manufacturing and 3-in-1 domestic fire safety kits in Udaipur, Rajasthan.",
     url: BASE_URL,
     telephone: "+91-7891111390",
