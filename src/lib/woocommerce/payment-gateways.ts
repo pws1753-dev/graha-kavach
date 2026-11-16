@@ -6,8 +6,8 @@ import { getWooCommerceUrls, wooRequest } from "./client";
 export const wooPaymentGatewaySchema = z.object({
   id: z.string(),
   title: z.string(),
-  description: z.string().optional().default(""),
-  instructions: z.string().optional().default(""),
+  description: z.string().nullish().transform((value) => value ?? ""),
+  instructions: z.string().nullish().transform((value) => value ?? ""),
   enabled: z.boolean(),
   method_title: z.string().optional().default(""),
   method_description: z.string().optional().default(""),

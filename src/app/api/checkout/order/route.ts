@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.format() },
+        { error: "Validation failed", messages: parsed.error.issues.map((issue) => issue.message), details: parsed.error.format() },
         { status: 400 },
       );
     }
@@ -111,8 +111,11 @@ export async function POST(request: Request) {
     // COD is set to 'processing' (or 'on-hold') and unpaid
     const isCod = isCodMethod(selectedGateway.id);
     const fullCodLanding = isLanding && isFullCodLanding(landingSlug);
-    if (fullCodLanding && !isCod) {
-      return NextResponse.json({ error: "This booking is Cash on Delivery only." }, { status: 400 });
+    if (fullCodLanding && !["cod", "razorpay"].includes(selectedGateway.id)) {
+      return NextResponse.json({ error: "Please choose Cash on Delivery or online payment." }, { status: 400 });
+    }
+    if (fullCodLanding && !isCod && !isRazorpayConfigured()) {
+      return NextResponse.json({ error: "Online payment is temporarily unavailable. Please choose Cash on Delivery." }, { status: 503 });
     }
     // COD takes a small advance online when Razorpay is set up; the order then
     // stays a draft until that advance is paid. Without Razorpay it is plain COD.
@@ -143,7 +146,8 @@ export async function POST(request: Request) {
         state: address.state,
         postcode: address.postcode,
         country: "IN",
-        email: address.email,
+        // WordPress validates an explicitly empty email as invalid; omission is allowed.
+        ...(address.email ? { email: address.email } : {}),
         phone: address.phone,
       },
       shipping: {

@@ -39,7 +39,7 @@ Runs in India time and, by default, as a rolling cycle: the offer ends every "Cy
 
 ## Orders
 
-`/book-now` offers 100% Cash on Delivery: no advance and no Razorpay step. The full live product price is due on delivery, and confirming the booking creates an unpaid WooCommerce COD order in `processing`. Its payment copy is adapted in `src/lib/landing/full-cod.ts`, including the FAQ and confirmation text, while other CMS content stays editable.
+`/book-now` offers 100% Cash on Delivery or full online payment through Razorpay, with no ₹199 advance. COD creates an unpaid order in `processing` after total validation; online payment keeps the order as a draft until the full amount is verified. Blank optional email addresses are omitted from the WooCommerce billing payload. Its payment copy is adapted in `src/lib/landing/full-cod.ts`, including the FAQ and confirmation text, while other CMS content stays editable.
 
 Other landing pages follow WooCommerce Deposits & Partial Payments settings, with any advance collected through Razorpay. The main checkout retains those settings too. Orders use the same API and carry `_source = nextjs-landing` and `_landing_page = <slug>` for ad reporting. The store header, footer and tab bar are hidden on landing routes.
 

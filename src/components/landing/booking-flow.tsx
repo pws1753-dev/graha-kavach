@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { trackInitiateCheckout, trackPurchase } from "@/lib/analytics/meta-pixel";
 import { reportVerifiedPurchase } from "@/lib/analytics/google-purchase";
 import type { CountdownConfig } from "@/lib/landing/countdown";
+import { isFullCodLanding } from "@/lib/landing/routes";
 import { confirmRazorpayPayment, payWithRazorpay } from "@/lib/razorpay/client";
 import { CARD_LOGOS, PaymentLogos, UPI_LOGOS, type PaymentLogoId } from "@/components/commerce/payment-logos";
 import { INDIAN_STATES } from "@/lib/validation/checkout";
@@ -166,24 +167,30 @@ export function BookingFlow({
   // The PIN whose lookup came back without a state; only then does the form ask for one.
   const [failedPin, setFailedPin] = useState("");
   const [method, setMethod] = useState<Method>("upi");
+  const [paymentChoice, setPaymentChoice] = useState<"cod" | "online">("cod");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [bookingId, setBookingId] = useState("");
-  const fullCod = money.advanceMinor === 0;
+  const offersFullPayment = isFullCodLanding(slug);
+  const online = offersFullPayment && paymentChoice === "online";
+  const fullCod = money.advanceMinor === 0 && !online;
+  const amountNow = online ? money.price : money.advance;
+  const amountOnDelivery = online ? money.advance : money.balance;
 
   const storageKey = `${STORAGE_KEY_PREFIX}:${slug}`;
   const idempotencyKey = useRef(newKey());
   const order = useRef<{ orderId: number; orderKey: string; orderNumber: string; razorpay: { keyId: string; orderId: string; amount: number; currency: string } | null } | null>(null);
   const cityTouched = useRef(false);
-  const stateKnown = failedPin !== fields.pin;
+  const stateKnown = Boolean(fields.state) && failedPin !== fields.pin;
 
   // A refresh on the confirmation screen must not drop the customer back on an empty form.
   useEffect(() => {
     try {
-      const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? "null") as { id: string; at: number } | null;
+      const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? "null") as { id: string; at: number; online?: boolean } | null;
       if (saved && Date.now() - saved.at < STORAGE_TTL_MS) {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from browser storage
         setBookingId(saved.id);
+        setPaymentChoice(saved.online ? "online" : "cod");
         setStep("done");
       }
     } catch {
@@ -225,7 +232,7 @@ export function BookingFlow({
   const update = (key: keyof Fields) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (key === "city") cityTouched.current = true;
     const value = key === "pin" ? event.target.value.replace(/\D/g, "").slice(0, 6) : event.target.value;
-    setFields((prev) => ({ ...prev, [key]: value }));
+    setFields((prev) => ({ ...prev, [key]: value, ...(key === "pin" ? { state: "" } : {}) }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   };
 
@@ -271,7 +278,7 @@ export function BookingFlow({
               postcode: fields.pin,
               country: "IN",
             },
-            paymentMethod: "cod",
+            paymentMethod: online ? "razorpay" : "cod",
             items: [{ productId: money.productId, quantity: 1 }],
             idempotencyKey: idempotencyKey.current,
           }),
@@ -294,7 +301,7 @@ export function BookingFlow({
         }
 
         if (!res.ok || !data.success || !data.orderId || !data.orderKey) {
-          throw new Error(data.messages?.[0] || "बुकिंग शुरू नहीं हो पाई। कृपया फिर कोशिश कीजिए।");
+          throw new Error(data.messages?.[0] || data.error || "बुकिंग शुरू नहीं हो पाई। कृपया फिर कोशिश कीजिए।");
         }
 
         order.current = {
@@ -324,13 +331,13 @@ export function BookingFlow({
 
         const confirmed = await confirmRazorpayPayment({ wooOrderId: current.orderId, orderKey: current.orderKey, ...result.payment });
         if (!confirmed) {
-          throw new Error(`???? ?????? ?? ??? ??, ?? ?????? ??? ???? ??? ?????? ?????? ? ????? ????? ?????? ID ${current.orderNumber} ?? ??? ???? ??? ??????`);
+          throw new Error(`आपका भुगतान हो गया है, पर पुष्टि में देरी है। दोबारा भुगतान न करें। कृपया बुकिंग ID ${current.orderNumber} के साथ हमें कॉल कीजिए।`);
         }
         void reportVerifiedPurchase(current.orderId, current.orderKey);
       }
       trackPurchase({ orderId: current.orderNumber, value: money.priceMinor / 100, currency: money.currency, content_ids: [money.productId] });
       try {
-        sessionStorage.setItem(storageKey, JSON.stringify({ id: current.orderNumber, at: Date.now() }));
+        sessionStorage.setItem(storageKey, JSON.stringify({ id: current.orderNumber, at: Date.now(), online }));
       } catch {
         // Not critical.
       }
@@ -341,7 +348,7 @@ export function BookingFlow({
     } finally {
       setBusy(false);
     }
-  }, [fields, fullCod, method, money.currency, money.priceMinor, money.productId, slug, storageKey]);
+  }, [fields, fullCod, online, method, money.currency, money.priceMinor, money.productId, slug, storageKey]);
 
   const phoneDigits = content.phone.replace(/\D/g, "").slice(-10);
   const priceBox = (
@@ -410,7 +417,7 @@ export function BookingFlow({
 
             <div className="mt-auto flex flex-col gap-2.5 pt-2">
               <button type="submit" className="lp-btn">
-                {fullCod ? "आगे बढ़ें — Cash on Delivery" : `Book Now — ${money.advance} दें`}
+                {offersFullPayment ? "आगे बढ़ें — भुगतान चुनें" : fullCod ? "आगे बढ़ें — Cash on Delivery" : `Book Now — ${money.advance} दें`}
                 <ArrowIcon />
               </button>
               <div className="text-center text-[13px] text-muted-foreground">{content.detailsNote}</div>
@@ -427,7 +434,27 @@ export function BookingFlow({
             <Progress step={2} />
             <div className="text-[13px] font-semibold text-muted-foreground">{fullCod ? "चरण 2 / 3 · बुकिंग की पुष्टि" : "चरण 2 / 3 · बुकिंग राशि"}</div>
           </div>
-          <h1 className="m-0 text-[23px] leading-[1.2] font-extrabold">{content.payTitle}</h1>
+          <h1 className="m-0 text-[23px] leading-[1.2] font-extrabold">{offersFullPayment ? "भुगतान का तरीक़ा चुनें" : content.payTitle}</h1>
+
+          {offersFullPayment ? (
+            <fieldset className="m-0 grid grid-cols-2 gap-2.5 border-0 p-0">
+              <legend className="sr-only">भुगतान का तरीक़ा</legend>
+              {([
+                { id: "cod", title: "Cash on Delivery", note: "पूरी क़ीमत डिलीवरी पर दें" },
+                { id: "online", title: "Pay Online", note: "पूरी क़ीमत अभी दें" },
+              ] as const).map((option) => (
+                <label key={option.id} className={`flex cursor-pointer items-start gap-2 rounded-[10px] border-2 p-3 ${paymentChoice === option.id ? "border-primary bg-primary-subtle" : "border-border bg-white"}`}>
+                  <input type="radio" name="payment-choice" value={option.id} checked={paymentChoice === option.id} disabled={busy} onChange={() => {
+                    setPaymentChoice(option.id);
+                    setError("");
+                    order.current = null;
+                    idempotencyKey.current = newKey();
+                  }} className="mt-1 size-4 shrink-0 accent-primary" />
+                  <span><span className="block text-sm font-bold">{option.title}</span><span className="text-xs text-foreground-muted">{option.note}</span></span>
+                </label>
+              ))}
+            </fieldset>
+          ) : null}
 
           <div className="flex flex-col gap-2.5 rounded-[14px] bg-foreground p-[18px] text-white">
             <div className="flex justify-between gap-3 text-base">
@@ -436,7 +463,7 @@ export function BookingFlow({
             </div>
             <div className="flex justify-between gap-3 text-base text-[#a8a29e]">
               <div>डिलीवरी पर देना है</div>
-              <div className="lp-display font-bold">{money.balance}</div>
+              <div className="lp-display font-bold">{amountOnDelivery}</div>
             </div>
             {money.discount ? (
               <div className="flex justify-between gap-3 text-base font-semibold text-accent">
@@ -447,7 +474,7 @@ export function BookingFlow({
             <div className="h-px bg-[#3f3f3f]" />
             <div className="flex items-center justify-between gap-3">
               <div className="text-lg font-bold">अभी देना है</div>
-              <div className="lp-display text-[28px] leading-none font-extrabold text-accent">{money.advance}</div>
+              <div className="lp-display text-[28px] leading-none font-extrabold text-accent">{amountNow}</div>
             </div>
           </div>
 
@@ -486,7 +513,7 @@ export function BookingFlow({
 
           <div className="mt-auto flex flex-col gap-2.5 pt-2">
             <button type="button" onClick={pay} disabled={busy} className="lp-btn">
-              {busy ? "कृपया रुकिए…" : fullCod ? "Cash on Delivery पर Book करें" : `${money.advance} दें और Book करें`}
+              {busy ? "कृपया रुकिए…" : fullCod ? "Cash on Delivery पर Book करें" : `${amountNow} Pay करें और Book करें`}
               {busy ? null : <ArrowIcon />}
             </button>
             <div className="flex items-center justify-center gap-1.5 text-[13px] text-muted-foreground">
@@ -494,7 +521,7 @@ export function BookingFlow({
                 <rect x="5" y="11" width="14" height="9" rx="2" />
                 <path d="M8 11V8a4 4 0 0 1 8 0v3" />
               </svg>
-              {content.paySecure}
+              {online ? "सुरक्षित भुगतान · Razorpay" : content.paySecure}
             </div>
           </div>
         </Shell>
@@ -513,7 +540,7 @@ export function BookingFlow({
               <path d="M42 66l15 15 29-32" fill="none" stroke="#e01820" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <h1 className="m-0 text-[26px] leading-[1.2] font-extrabold">{content.doneTitle}</h1>
-            <div className="text-[15.5px] leading-normal text-foreground-muted">{content.doneText}</div>
+            <div className="text-[15.5px] leading-normal text-foreground-muted">{online ? `${money.price} का ऑनलाइन भुगतान मिल गया। आपकी Graha Kavach किट बुक हो गई है। डिलीवरी पर कोई भुगतान नहीं देना है।` : content.doneText}</div>
             {bookingId ? (
               <div className="rounded-[10px] border border-border-strong px-[18px] py-2.5 text-[15px] text-foreground-muted">
                 बुकिंग ID <span className="lp-display font-extrabold text-foreground">{bookingId}</span>
@@ -526,7 +553,7 @@ export function BookingFlow({
             {content.doneSteps.map((text, index) => (
               <div key={text} className="flex items-start gap-3">
                 <div className="lp-display flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-extrabold text-white">{index + 1}</div>
-                <div className="text-base leading-[1.45] text-foreground-muted">{text}</div>
+                <div className="text-base leading-[1.45] text-foreground-muted">{online && /डिलीवरी पर|Delivery पर/.test(text) ? "ऑनलाइन भुगतान पूरा है। Kit मिलने पर कोई भुगतान नहीं देना है।" : text}</div>
               </div>
             ))}
           </div>

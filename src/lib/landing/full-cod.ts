@@ -7,7 +7,7 @@ export function withLandingPaymentCopy(landing: WpLanding, slug: string): WpLand
 
   return {
     ...landing,
-    ctaLabel: "Book Now — Cash on Delivery",
+    ctaLabel: "Book Now — COD या Pay Online",
     ctaSticky: "Book Now · 100% COD",
     heroText: landing.heroText.replace(/Booking सिर्फ़ \{advance\} से।/g, "100% Cash on Delivery — पूरी क़ीमत Kit मिलने पर दें।"),
     nowLabel: "अभी देना है",
@@ -19,16 +19,16 @@ export function withLandingPaymentCopy(landing: WpLanding, slug: string): WpLand
     })),
     offerPoints: landing.offerPoints.map((row) => ({
       ...row,
-      text: row.text.includes("{advance}") ? "बिना एडवांस Booking Confirm, पूरी क़ीमत {price} Delivery पर" : row.text,
+      text: row.text.includes("{advance}") ? "पूरी क़ीमत {price} Delivery पर या Online दें — कोई पार्ट पेमेंट नहीं" : row.text,
     })),
     steps: landing.steps.map((row) => ({
       ...row,
       title: row.title.includes("{advance}") ? "बिना एडवांस आज ही Book करें" : row.title.replace(/बाक़ी \{balance\}/g, "पूरी क़ीमत {price}"),
-      text: row.text.includes("{advance}") ? "अपना नाम, मोबाइल नंबर और पता भरें, फिर Cash on Delivery पर Booking Confirm करें।" : row.text,
+      text: row.text.includes("{advance}") ? "अपना नाम, मोबाइल नंबर और पता भरें, फिर Cash on Delivery या पूरी क़ीमत का Online Payment चुनें।" : row.text,
     })),
     faqs: landing.faqs.map((row) => row.q.includes("{advance}") ? {
       q: "Payment कब करना है?",
-      a: "पूरी क़ीमत {price} Kit की Delivery के समय दें। Booking के लिए कोई एडवांस नहीं देना है।",
+      a: "Cash on Delivery चुनकर पूरी क़ीमत {price} Kit मिलने पर दें, या Pay Online से पूरी क़ीमत अभी दें। कोई पार्ट पेमेंट नहीं है।",
     } : row),
     payTitle: "Cash on Delivery पर बुकिंग पक्की करें",
     paySecure: "100% Cash on Delivery · कोई एडवांस नहीं",

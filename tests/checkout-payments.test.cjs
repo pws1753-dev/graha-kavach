@@ -18,16 +18,16 @@ function loadRoute(file, mocks) {
 const config = {computeAdvanceMinor:()=>19900,isCodMethod:id=>id==='cod'};
 const analytics = {extractClientContext:()=>({}),sendMetaCapiEvent:async()=>{}};
 const landingRoutes = loadRoute('src/lib/landing/routes.ts',{});
+const checkoutValidation = loadRoute('src/lib/validation/checkout.ts',{});
 
-function checkout({total='2499.00',configured=true,source='landing',landing='',advanceMinor=19900}={}) {
+function checkout({total='2499.00',configured=true,source='landing',landing='',advanceMinor=19900,paymentMethod='cod',email='test@example.com'}={}) {
   const calls=[];
-  const body={source,landing,address:{firstName:'Test',lastName:'User',email:'test@example.com',phone:'9999999999',country:'IN'},paymentMethod:'cod',items:[{productId:32,quantity:1}],idempotencyKey:'a-unique-test-key'};
-  const validation={safeParse:raw=>({success:true,data:raw})};
+  const body={source,landing,address:{firstName:'Test',lastName:'User',email,phone:'9999999999',country:'IN',address1:'QA address',city:'Udaipur',state:'RJ',postcode:'313001'},paymentMethod,items:[{productId:32,quantity:1}],idempotencyKey:'a-unique-test-key'};
   const route=loadRoute('src/app/api/checkout/order/route.ts',{
-    '@/lib/validation/checkout':{checkoutSubmissionSchema:validation,landingSubmissionSchema:validation},
+    '@/lib/validation/checkout':checkoutValidation,
     '@/lib/woocommerce/cart-server':{validateCartServer:async()=>({hasErrors:false,totalMinor:249900,items:[{productId:32,quantity:1,unitPriceMinor:249900}]})},
     '@/lib/woocommerce/client':{getWooCommerceUrls:()=>({checkout:'https://example.com/checkout/'}),wooRequest:async input=>{calls.push(input);return {id:123,number:'123',order_key:'secret',status:'checkout-draft',total,currency:'INR'};}},
-    '@/lib/woocommerce/payment-gateways':{getActivePaymentGateways:async()=>[{id:'cod',title:'Cash on delivery'}]},
+    '@/lib/woocommerce/payment-gateways':{getActivePaymentGateways:async()=>[{id:'cod',title:'Cash on delivery',isOnline:false},{id:'razorpay',title:'Pay Online',isOnline:true}]},
     '@/lib/config/checkout':{...config,computeAdvanceMinor:()=>advanceMinor},
     '@/lib/landing/routes':landingRoutes,
     '@/lib/woocommerce/checkout-settings':{getCodAdvanceConfig:async()=>({})},
@@ -79,6 +79,35 @@ test('book-now still rejects incorrect totals before confirming COD',async()=>{
   const c=checkout({landing:'book-now',total:'2948.82'});
   assert.equal((await c.run()).status,502);assert.equal(c.calls.at(-1).body.status,'cancelled');
   assert.equal(c.calls.some(x=>x.body?.status==='processing'),false);
+});
+test('optional blank email is omitted from WooCommerce while a supplied email is kept',async()=>{
+  for(const email of ['', 'buyer@example.com']){
+    const c=checkout({landing:'book-now',email});const result=await c.run();
+    assert.equal(result.status,200);
+    assert.equal(c.calls[0].body.billing.email,email||undefined);
+    assert.equal(Object.hasOwn(c.calls[0].body.billing,'email'),Boolean(email));
+  }
+});
+test('book-now online option requests the full price and stays unpaid until verified',async()=>{
+  const c=checkout({landing:'book-now',paymentMethod:'razorpay',email:''});const result=await c.run();
+  assert.equal(result.status,200);assert.equal(result.body.isOnline,true);
+  assert.equal(result.body.razorpay.amount,249900);assert.equal(result.body.status,'checkout-draft');
+  assert.equal(c.calls[0].body.payment_method,'razorpay');assert.equal(c.calls[0].body.set_paid,false);
+  assert.equal(c.calls.some(x=>x.body?.status==='processing'),false);
+  assert.equal(c.calls[0].body.meta_data.some(x=>x.key==='_cod_advance_minor'),false);
+});
+test('unavailable online payment offers COD without creating an unpaid online attempt',async()=>{
+  const c=checkout({landing:'book-now',paymentMethod:'razorpay',configured:false});
+  const result=await c.run();assert.equal(result.status,503);assert.match(result.body.error,/Cash on Delivery/);
+  assert.equal(c.calls.length,0);
+});
+test('WooCommerce gateway descriptions can be null without falling back to Store API',async()=>{
+  const {getActivePaymentGateways}=loadRoute('src/lib/woocommerce/payment-gateways.ts',{
+    'server-only':{},
+    './client':{wooRequest:async({schema})=>schema.parse([{id:'razorpay',title:'Pay Online',description:null,instructions:null,enabled:true},{id:'cod',title:'Cash on Delivery',enabled:true}])},
+  });
+  const methods=await getActivePaymentGateways();
+  assert.equal(methods.length,2);assert.equal(methods[0].description,'');assert.equal(methods[0].isOnline,true);
 });
 test('other campaigns and the main checkout retain their COD advance',async()=>{
   for(const input of [{landing:'other-campaign'},{source:'checkout',landing:'book-now'}]){
