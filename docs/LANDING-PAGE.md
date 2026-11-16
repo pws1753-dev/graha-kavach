@@ -20,7 +20,7 @@ The booking steps for a page are at `/lp/<slug>/book` (`/book-now/details` for t
 | SEO title, description, social card, noindex | The **Yoast SEO** box on the page |
 | Which product it sells | **Page settings** tab > WooCommerce product (slug). Empty uses the main kit, `graha-kavach-complete-fire-safety-kit` |
 | Prices and discount | That WooCommerce product (regular price and sale price) |
-| Amount paid now (balance on delivery) | WooCommerce **Deposits & Partial Payments** |
+| Amount paid now (balance on delivery) | `/book-now`: no advance, 100% COD. Other campaigns: WooCommerce **Deposits & Partial Payments** |
 | Countdown on or off | **Page settings** tab > Hide the countdown |
 
 ## Prices in the copy
@@ -39,7 +39,9 @@ Runs in India time and, by default, as a rolling cycle: the offer ends every "Cy
 
 ## Orders
 
-A booking is a normal WooCommerce COD order with the advance collected through Razorpay, created by the same API as the main checkout. The order carries `_source = nextjs-landing` and `_landing_page = <slug>`, so you can see which page an order came from. The store header, footer and tab bar are hidden on landing routes.
+`/book-now` offers 100% Cash on Delivery: no advance and no Razorpay step. The full live product price is due on delivery, and confirming the booking creates an unpaid WooCommerce COD order in `processing`. Its payment copy is adapted in `src/lib/landing/full-cod.ts`, including the FAQ and confirmation text, while other CMS content stays editable.
+
+Other landing pages follow WooCommerce Deposits & Partial Payments settings, with any advance collected through Razorpay. The main checkout retains those settings too. Orders use the same API and carry `_source = nextjs-landing` and `_landing_page = <slug>` for ad reporting. The store header, footer and tab bar are hidden on landing routes.
 
 ## How it works
 

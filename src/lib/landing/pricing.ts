@@ -4,13 +4,14 @@ import { computeAdvanceMinor } from "@/lib/config/checkout";
 import { getCodAdvanceConfig } from "@/lib/woocommerce/checkout-settings";
 import { getProductBySlug } from "@/lib/woocommerce/products";
 import type { LandingPricing } from "./text";
+import { isFullCodLanding } from "./routes";
 
 const DEFAULT_PRODUCT_SLUG = "graha-kavach-complete-fire-safety-kit";
 
 const toMinor = (value: string) => Math.round((parseFloat(value) || 0) * 100);
 
 /** Live price, regular price and advance for the page's product. Null when the product cannot be read. */
-export async function getLandingPricing(productSlug?: string): Promise<LandingPricing | null> {
+export async function getLandingPricing(productSlug?: string, landingSlug = ""): Promise<LandingPricing | null> {
   try {
     const requested = productSlug?.trim() || DEFAULT_PRODUCT_SLUG;
     // If the slug set on the landing page matches no published product, use the default kit instead of failing the page.
@@ -31,7 +32,7 @@ export async function getLandingPricing(productSlug?: string): Promise<LandingPr
       currency: "INR",
       priceMinor,
       mrpMinor,
-      advanceMinor: computeAdvanceMinor(advanceConfig, priceMinor),
+      advanceMinor: isFullCodLanding(landingSlug) ? 0 : computeAdvanceMinor(advanceConfig, priceMinor),
     };
   } catch (error) {
     console.warn("Failed to load landing page pricing:", error);

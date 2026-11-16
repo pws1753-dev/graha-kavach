@@ -5,6 +5,7 @@ import { wooRequest } from "@/lib/woocommerce/client";
 import { getActivePaymentGateways } from "@/lib/woocommerce/payment-gateways";
 import { computeAdvanceMinor, isCodMethod } from "@/lib/config/checkout";
 import { getCodAdvanceConfig } from "@/lib/woocommerce/checkout-settings";
+import { isFullCodLanding } from "@/lib/landing/routes";
 import { getWooCommerceUrls } from "@/lib/woocommerce/client";
 import {
   createRazorpayOrder,
@@ -109,15 +110,19 @@ export async function POST(request: Request) {
     // Determine initial status based on payment method
     // COD is set to 'processing' (or 'on-hold') and unpaid
     const isCod = isCodMethod(selectedGateway.id);
+    const fullCodLanding = isLanding && isFullCodLanding(landingSlug);
+    if (fullCodLanding && !isCod) {
+      return NextResponse.json({ error: "This booking is Cash on Delivery only." }, { status: 400 });
+    }
     // COD takes a small advance online when Razorpay is set up; the order then
     // stays a draft until that advance is paid. Without Razorpay it is plain COD.
     // The advance amount comes from the WordPress deposit settings, so a price
     // change in wp-admin applies here without a deploy.
-    const advanceMinor = isCod
+    const advanceMinor = isCod && !fullCodLanding
       ? computeAdvanceMinor(await getCodAdvanceConfig(), validatedCart.totalMinor)
       : 0;
     const codAdvance = isCod && isRazorpayConfigured() && advanceMinor > 0;
-    if ((isLanding || (isCod && advanceMinor > 0)) && !codAdvance) {
+    if (((isLanding && !fullCodLanding) || (isCod && advanceMinor > 0)) && !codAdvance) {
       return NextResponse.json({ error: "Online booking payment is temporarily unavailable. Please contact us." }, { status: 503 });
     }
     const initialStatus = "checkout-draft";

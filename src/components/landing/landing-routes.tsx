@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLandingPricing } from "@/lib/landing/pricing";
-import { landingPaths } from "@/lib/landing/routes";
+import { isFullCodLanding, landingPaths } from "@/lib/landing/routes";
+import { withLandingPaymentCopy } from "@/lib/landing/full-cod";
 import { fillTokens, plainText } from "@/lib/landing/text";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import { buildBreadcrumbSchema, buildFaqSchema } from "@/lib/seo/structured-data";
@@ -30,7 +31,13 @@ export async function landingMetadata(slug: string): Promise<Metadata> {
   const page = await getLandingSeo(landing.pageId, slug);
 
   return buildSeoMetadata({
-    seo: page?.seo,
+    seo: isFullCodLanding(slug) ? {
+      ...page?.seo,
+      title: "Graha Kavach 3-in-1 Home Fire Safety Kit | 100% COD",
+      metaDesc: "Graha Kavach 3-in-1 Home Fire Safety Kit. पूरी क़ीमत डिलीवरी पर दें। बिना एडवांस बुकिंग, पूरे भारत में Free Delivery और 100% Cash on Delivery.",
+      opengraphTitle: "Graha Kavach 3-in-1 Kit | 100% Cash on Delivery",
+      opengraphDescription: "बिना एडवांस बुकिंग करें। पूरी क़ीमत Kit मिलने पर दें। Free Delivery और 100% Cash on Delivery.",
+    } : page?.seo,
     fallbackTitle: page?.title || FALLBACK_TITLE,
     fallbackDescription: FALLBACK_DESCRIPTION,
     path: landingPaths(slug).page,
@@ -45,10 +52,11 @@ export const bookingMetadata: Metadata = {
 };
 
 export async function LandingPageRoute({ slug }: { slug: string }) {
-  const landing = await getLanding(slug);
-  if (!landing) notFound();
+  const cmsLanding = await getLanding(slug);
+  if (!cmsLanding) notFound();
+  const landing = withLandingPaymentCopy(cmsLanding, slug);
 
-  const [pricing, settings] = await Promise.all([getLandingPricing(landing.productSlug), getGlobalSiteSettings()]);
+  const [pricing, settings] = await Promise.all([getLandingPricing(landing.productSlug, slug), getGlobalSiteSettings()]);
   if (!pricing) notFound();
 
   const paths = landingPaths(slug);
@@ -81,10 +89,11 @@ export async function LandingPageRoute({ slug }: { slug: string }) {
 }
 
 export async function BookingRoute({ slug }: { slug: string }) {
-  const landing = await getLanding(slug);
-  if (!landing) notFound();
+  const cmsLanding = await getLanding(slug);
+  if (!cmsLanding) notFound();
+  const landing = withLandingPaymentCopy(cmsLanding, slug);
 
-  const [pricing, settings] = await Promise.all([getLandingPricing(landing.productSlug), getGlobalSiteSettings()]);
+  const [pricing, settings] = await Promise.all([getLandingPricing(landing.productSlug, slug), getGlobalSiteSettings()]);
   if (!pricing) notFound();
 
   const t = (text: string) => fillTokens(text, pricing, landing.endTime);
