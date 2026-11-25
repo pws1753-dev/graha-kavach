@@ -7,6 +7,7 @@ import { buildTelUrl, buildWhatsAppUrl } from "@/lib/config/contact";
 import { getCmsPages, getGlobalSiteSettings, type NavItem } from "@/lib/wordpress/adapters";
 import { FooterNavGroup } from "./footer-nav-group";
 import { FooterSubscribe } from "./footer-subscribe";
+import { SocialProfileLinks } from "./social-profile-links";
 
 const EXPLORE: NavItem[] = [
   { label: "Fire Safety Kit", href: "/fire-safety-kit" },
@@ -173,6 +174,7 @@ export async function SiteFooter() {
                 </li>
               ) : null}
             </ul>
+            <SocialProfileLinks className="mt-4 text-xs text-gray-900" />
           </div>
         </div>
 

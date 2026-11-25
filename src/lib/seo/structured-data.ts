@@ -1,4 +1,5 @@
 import { siteConfig } from "@/lib/config/site";
+import { SOCIAL_PROFILES } from "@/lib/config/social";
 import { stripHtml } from "@/lib/wordpress/format";
 import type { WooProduct } from "@/lib/woocommerce/types";
 import type { WooReview as WooProductReview } from "@/lib/woocommerce/types";
@@ -58,8 +59,7 @@ export function buildOrganizationSchema() {
     sameAs: [
       "https://specialitygeochem.com/",
       "https://therakeshmishra.com/",
-      "https://www.facebook.com/profile.php?id=61592687387001",
-      "https://www.instagram.com/grahakavach/",
+      ...SOCIAL_PROFILES.map(({ href }) => href),
     ],
   };
 }

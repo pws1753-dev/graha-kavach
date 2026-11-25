@@ -11,6 +11,7 @@ import { CertificationMarquee } from "@/components/home/certification-marquee";
 import { SafetyGuides } from "@/components/home/safety-guides";
 import { FaqSection } from "@/components/home/conversion";
 import { ContactForm } from "@/components/contact/contact-form";
+import { SocialProfileLinks } from "@/components/layout/social-profile-links";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import {
   buildBreadcrumbSchema,
@@ -170,6 +171,8 @@ export default async function ContactPage() {
                   </p>
                 </div>
               </a>
+
+              <SocialProfileLinks className="rounded-xl border border-border bg-white px-5 pt-4 pb-2 text-sm text-foreground shadow-sm" />
 
               {/* Address */}
               <div className="flex items-start gap-4 rounded-xl border border-border bg-white p-5 shadow-sm">

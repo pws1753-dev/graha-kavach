@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SocialProfileLinks } from "@/components/layout/social-profile-links";
 import {
   Shield,
   Award,
@@ -618,6 +619,7 @@ export default function AboutPage() {
               <span>Read Free Safety Guide</span>
             </Link>
           </div>
+          <SocialProfileLinks className="mt-6 flex flex-col items-center text-sm text-white" />
         </div>
       </section>
     </div>
