@@ -44,6 +44,9 @@ function headline(shipment: TrackingShipment | undefined, data: TrackingData, st
   }
   if (shipment?.status === "return_to_sender") return { text: "Returning to sender", sub: "", tone: "bad" };
   if (stage === 2) return { text: "Out for delivery", sub: "Arriving today", tone: "good" };
+  if (shipment?.status === "insufficient_balance") {
+    return { text: stage === 1 ? "Shipped" : "Tracking number assigned", sub: "Check the courier for the latest status", tone: "good" };
+  }
   if (shipment?.estimatedDelivery) return { text: `Arriving by ${formatDay(shipment.estimatedDelivery)}`, sub: shipment.statusLabel ?? "", tone: "good" };
   if (stage === 1) return { text: shipment?.statusLabel && shipment.status !== "unknown" ? shipment.statusLabel : "Shipped", sub: "On its way to you", tone: "good" };
   if (data.state === "awaiting_payment" || data.state === "confirming") return { text: "Waiting for payment confirmation", sub: "", tone: "warn" };
@@ -123,6 +126,8 @@ function ShipmentCard({ shipment, data, multiple, number }: { shipment: Tracking
   const top = headline(shipment, data, stage);
   const events = shipment?.events ?? [];
   const visible = showAll ? events : events.slice(0, 4);
+  const trackingUrl = shipment?.trackingUrl ||
+    (shipment?.carrier.trim().toLowerCase() === "delhivery" ? "https://www.delhivery.com/tracking" : "");
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-xs">
@@ -173,8 +178,8 @@ function ShipmentCard({ shipment, data, multiple, number }: { shipment: Tracking
               </p>
               {shipment.shippedOn ? <p className="mt-0.5 text-[11px] text-muted-foreground">Shipped on {shipment.shippedOn}</p> : null}
             </div>
-            {shipment.trackingUrl ? (
-              <a href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-primary underline">
+            {trackingUrl ? (
+              <a href={trackingUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-primary underline">
                 Track on {shipment.carrier}
               </a>
             ) : null}
@@ -217,7 +222,9 @@ function ShipmentCard({ shipment, data, multiple, number }: { shipment: Tracking
             </div>
           ) : (
             <p className="mt-4 text-xs text-muted-foreground">
-              Courier scans will appear here as soon as the parcel moves. They refresh automatically.
+              {trackingUrl
+                ? "For the latest delivery status, open the courier link and use the tracking number above."
+                : "No courier scans are available yet."}
             </p>
           )}
         </div>
