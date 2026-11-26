@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPosts } from "@/lib/wordpress/adapters";
+import { getAllPosts } from "@/lib/wordpress/adapters";
 import { stripHtml } from "@/lib/wordpress/format";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
 import { BLOG_AUTHOR, buildBreadcrumbSchema, buildOrganizationSchema } from "@/lib/seo/structured-data";
@@ -19,7 +19,7 @@ export const generateMetadata = (): Metadata =>
 
 export default async function AuthorPage() {
   const baseUrl = siteConfig.frontendUrl.replace(/\/$/, "");
-  const posts = await getPosts(100);
+  const posts = await getAllPosts();
 
   const { "@context": _orgContext, ...organization } = buildOrganizationSchema();
   const { "@context": _crumbContext, ...breadcrumb } = buildBreadcrumbSchema([

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/config/site";
-import { getCmsPages, getPosts } from "@/lib/wordpress/adapters";
+import { getAllPosts, getCmsPages } from "@/lib/wordpress/adapters";
 
 /**
  * Every URL that should be indexed, built from WordPress on each request cycle,
@@ -13,7 +13,7 @@ import { getCmsPages, getPosts } from "@/lib/wordpress/adapters";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.frontendUrl.replace(/\/$/, "");
 
-  const [posts, cmsPages] = await Promise.all([getPosts(100), getCmsPages()]);
+  const [posts, cmsPages] = await Promise.all([getAllPosts(), getCmsPages()]);
 
   // /book-now and /lp/* are campaign pages (noindex), so they are not listed.
   const staticPages: MetadataRoute.Sitemap = [

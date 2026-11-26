@@ -115,8 +115,12 @@ export const PAGE_BY_SLUG_QUERY = `
 `;
 
 export const POSTS_QUERY = `
-  query Posts($first: Int!) {
-    posts(first: $first, where: { status: PUBLISH }) {
+  query Posts($first: Int!, $after: String) {
+    posts(first: $first, after: $after, where: { status: PUBLISH }) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
       nodes {
         id
         databaseId

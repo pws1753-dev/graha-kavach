@@ -81,7 +81,15 @@ const postResponseSchema = z.object({
 });
 
 const postsResponseSchema = z.object({
-  posts: z.object({ nodes: z.array(wpPostSchema) }),
+  posts: z.object({
+    pageInfo: z
+      .object({
+        hasNextPage: z.boolean(),
+        endCursor: z.string().nullable(),
+      })
+      .optional(),
+    nodes: z.array(wpPostSchema),
+  }),
 });
 
 const faqsResponseSchema = z.object({
@@ -256,6 +264,37 @@ export async function getPosts(first = 9): Promise<WpPost[]> {
   });
 
   return data.posts.nodes.filter((post) => !PLACEHOLDER_POST_SLUGS.has(post.slug));
+}
+
+/** Fetches every published post across WPGraphQL cursor pages so older articles are never cut off. */
+export async function getAllPosts(): Promise<WpPost[]> {
+  const pageSize = 100;
+  const maxPages = 10;
+  const all: WpPost[] = [];
+  const seen = new Set<string>();
+  let after: string | null = null;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const data: z.infer<typeof postsResponseSchema> = await wpGraphql({
+      query: POSTS_QUERY,
+      variables: { first: pageSize, after },
+      schema: postsResponseSchema,
+      tags: [CacheTag.posts],
+      revalidate: Revalidate.posts,
+    });
+
+    for (const post of data.posts.nodes) {
+      if (PLACEHOLDER_POST_SLUGS.has(post.slug) || seen.has(post.slug)) continue;
+      seen.add(post.slug);
+      all.push(post);
+    }
+
+    const pageInfo = data.posts.pageInfo;
+    if (!pageInfo?.hasNextPage || !pageInfo.endCursor) break;
+    after = pageInfo.endCursor;
+  }
+
+  return all;
 }
 
 export async function getPostBySlug(slug: string): Promise<WpPost | null> {

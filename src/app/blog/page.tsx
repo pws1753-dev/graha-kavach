@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { BookOpen, ShieldAlert } from "lucide-react";
-import { getPosts, getCategories } from "@/lib/wordpress/adapters";
+import { getAllPosts, getCategories } from "@/lib/wordpress/adapters";
 import { BlogCard } from "@/components/blog/blog-card";
 import { CategoryFilter } from "@/components/blog/category-filter";
 import { buildSeoMetadata } from "@/lib/seo/metadata";
@@ -47,7 +47,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { category } = await searchParams;
 
   const [allPosts, categories] = await Promise.all([
-    getPosts(30),
+    getAllPosts(),
     getCategories(),
   ]);
 
